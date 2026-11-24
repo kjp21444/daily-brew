@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#eef0f2">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Daily Brew">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Daily Brew</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: phone-first single column, scrolling screen above a fixed bottom tab bar; onboarding hides the bar. */
+:root {
+  --bg: #eef0f2;
+  --surface: #ffffff;
+  --ink: #1c2126;
+  --muted: #5d6670;
+  --line: #d6dbe0;
+  --accent: #b5621b;
+  --accent-ink: #ffffff;
+  --accent-soft: #f6e6d6;
+  --good: #2f7a4f;
+  --warn: #9a6a00;
+  --bad: #b23b3b;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15181b; --surface: #1f2428; --ink: #eef1f3; --muted: #9aa4ad; --line: #333a40;
+    --accent: #e8954d; --accent-ink: #1a1208; --accent-soft: #3a2a1c;
+    --good: #6cc191; --warn: #e0b54a; --bad: #ef7b7b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15181b; --surface: #1f2428; --ink: #eef1f3; --muted: #9aa4ad; --line: #333a40;
+  --accent: #e8954d; --accent-ink: #1a1208; --accent-soft: #3a2a1c;
+  --good: #6cc191; --warn: #e0b54a; --bad: #ef7b7b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font-body); -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+#app { max-width: 520px; margin: 0 auto; min-height: 100%; }
+.screen { padding: 20px 16px 110px; display: grid; gap: 16px; }
+.screen.onboard { padding-bottom: 32px; min-height: 100%; align-content: start; }
+
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
+h1 { font-weight: 800; font-size: 30px; line-height: 1.1; letter-spacing: -0.01em; }
+h2 { font-weight: 600; font-size: 20px; line-height: 1.2; }
+h3 { font-weight: 600; font-size: 17px; }
+.eyebrow { font-size: 13px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+p { margin: 0; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px; display: grid; gap: 12px; }
+.hero { border: 2px solid var(--accent); }
+.hero h2 { font-size: 26px; font-weight: 800; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.pill { font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.pill.good { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+.pill.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+.pill.bad { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
+.why { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+.why li::before { content: "✓ "; color: var(--accent); font-weight: 600; }
+
+.btn { font-weight: 600; font-size: 15px; border-radius: 12px; padding: 12px 18px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-align: center; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.ghost { background: transparent; }
+.btn.block { width: 100%; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btns { display: flex; gap: 8px; }
+.btns .btn { flex: 1; }
+.link { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; cursor: pointer; font-size: 14px; }
+
+.list { display: grid; gap: 8px; }
+.item { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; width: 100%; padding: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); cursor: pointer; }
+.item .t { font-weight: 600; }
+.item .m { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+
+/* Survey */
+.progress { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.25s; }
+.opts { display: grid; gap: 8px; }
+.opts.two { grid-template-columns: 1fr 1fr; }
+.opt { text-align: left; padding: 14px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface); cursor: pointer; display: grid; gap: 2px; }
+.opt .s { font-size: 13px; color: var(--muted); }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.opt[aria-pressed="true"] .t::after { content: " ✓"; color: var(--accent); }
+.opt .t { font-weight: 600; }
+
+/* Pantry */
+.pantry-sec { display: grid; gap: 10px; }
+.toggles { display: flex; flex-wrap: wrap; gap: 8px; }
+.tog { padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); cursor: pointer; font-size: 15px; }
+.tog[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.tog[aria-pressed="true"]::before { content: "✓ "; color: var(--accent); }
+
+/* Recipe */
+.back { justify-self: start; background: none; border: 0; padding: 6px 0; color: var(--accent); font-weight: 600; cursor: pointer; }
+.ings { list-style: none; margin: 0; padding: 0; display: grid; }
+.ing { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: start; padding: 11px 0; border-top: 1px solid var(--line); }
+.ing:first-child { border-top: 0; }
+.ing .ic { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; margin-top: 1px; }
+.ic.have { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--good); }
+.ic.sub { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+.ic.missing { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
+.ic.opt { background: var(--bg); color: var(--muted); }
+.ing .name { font-weight: 500; }
+.ing .note { font-size: 13px; color: var(--muted); }
+.ing .qty { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.stepper { display: flex; align-items: center; gap: 4px; }
+.stepper button { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: 20px; font-weight: 600; cursor: pointer; }
+.stepper output { min-width: 60px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.steps label { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; padding: 11px 12px; border-radius: 12px; background: var(--bg); cursor: pointer; }
+.steps input { width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--accent); }
+.steps input:checked + span { color: var(--muted); text-decoration: line-through; }
+
+.search { width: 100%; padding: 12px 14px; font: inherit; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.filters { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.filters .tog { white-space: nowrap; font-size: 14px; padding: 6px 12px; }
+.filters .tog[aria-pressed="true"]::before { content: ""; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); font-size: 14px; padding: 7px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); font-weight: 600; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 15px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; text-align: right; font-weight: 500; }
+
+/* Nav */
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 5; }
+nav.tabs .in { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); }
+nav.tabs button { background: none; border: 0; padding: 9px 4px 10px; display: grid; justify-items: center; gap: 2px; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; }
+nav.tabs button svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+nav.tabs button[aria-current="page"] { color: var(--accent); font-weight: 600; }
+
+/* Sheet */
+.scrim { position: fixed; inset: 0; background: rgba(10, 12, 14, 0.45); z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--surface); width: 100%; max-width: 520px; max-height: 82%; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 18px 16px calc(24px + env(safe-area-inset-bottom)); display: grid; gap: 12px; }
+.sheet .grab { width: 40px; height: 4px; border-radius: 4px; background: var(--line); justify-self: center; }
+.subopt { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); display: grid; gap: 4px; }
+.subopt.ok { border-color: color-mix(in srgb, var(--good) 50%, var(--line)); }
+.subopt .h { font-size: 13px; font-weight: 600; }
+.subopt.ok .h { color: var(--good); }
+.subopt.no .h { color: var(--muted); }
+.field { display: grid; gap: 6px; }
+.field label { font-size: 14px; font-weight: 500; color: var(--muted); }
+.field-in { width: 100%; padding: 10px 12px; font: inherit; font-size: 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+textarea.field-in { resize: vertical; line-height: 1.4; }
+.ed-ing { display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.ed-ing .field-in { background: var(--surface); }
+.ed-row { display: grid; grid-template-columns: 4.5rem minmax(5.5rem, 1fr) auto auto; gap: 8px; align-items: center; }
+.chk { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); white-space: nowrap; }
+.chk input { accent-color: var(--accent); width: 18px; height: 18px; }
+.icon-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; color: var(--muted); }
+.cs-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.cs-row .tog { justify-self: start; }
+.howto { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 15px; }
+.addr { font-weight: 600; word-break: break-all; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.err { color: var(--bad); font-weight: 500; font-size: 14px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.save-note { font-size: 12px; color: var(--muted); text-align: center; }
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .progress span { transition: none; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav class="tabs" id="nav" hidden aria-label="Main">
+  <div class="in">
+    <button type="button" data-go="today"><svg viewBox="0 0 24 24"><path d="M4 9h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.5 1 1.5 1 3M12 3c0 1.5 1 1.5 1 3"/></svg>Today</button>
+    <button type="button" data-go="library"><svg viewBox="0 0 24 24"><path d="M5 4h4v16H5zM10 4h4v16h-4z"/><path d="m15.5 5 3.8-1 3.2 15.6-3.8 1z"/></svg>Recipes</button>
+    <button type="button" data-go="mine"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>Mine</button>
+    <button type="button" data-go="pantry"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 6h4M10 12h4M10 18h4"/></svg>Pantry</button>
+    <button type="button" data-go="profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>You</button>
+  </div>
+</nav>
+<div id="sheet-root"></div>
+
+<script>
+(function () {
+"use strict";
+
+/* ---------- Catalog ---------- */
+var EQUIP = [
+  { id: "espresso", label: "Espresso machine", short: "espresso machine" },
+  { id: "pod_esp", label: "Espresso pod machine (Nespresso-style)", short: "pod machine" },
+  { id: "pod_brew", label: "Coffee pod brewer (Keurig-style)", short: "pod brewer" },
+  { id: "moka", label: "Moka pot", short: "moka pot" },
+  { id: "aeropress", label: "AeroPress", short: "AeroPress" },
+  { id: "press", label: "French press", short: "French press" },
+  { id: "drip", label: "Drip machine", short: "drip machine" },
+  { id: "pourover", label: "Pour-over", short: "pour-over" },
+  { id: "coldbrewer", label: "Cold brew maker", short: "cold brew maker" },
+  { id: "jar", label: "Jar for cold brew", short: "jar" },
+  { id: "instant", label: "Instant coffee", short: "instant coffee" },
+  { id: "frother", label: "Milk frother", short: "frother" }
+];
+var EQ = {}; EQUIP.forEach(function (e) { EQ[e.id] = e; });
+
+var PANTRY = [
+  { title: "Milk & cream", items: [
+    ["milk_whole", "Whole milk"], ["milk_oat", "Oat milk"], ["milk_almond", "Almond milk"], ["milk_soy", "Soy milk"],
+    ["milk_coconut", "Coconut milk"], ["half_half", "Half-and-half"], ["heavy_cream", "Heavy cream"],
+    ["condensed", "Sweetened condensed milk"], ["whipped", "Whipped cream"], ["ice_cream", "Vanilla ice cream"], ["butter", "Butter"] ] },
+  { title: "Sweeteners", items: [
+    ["sugar", "White sugar"], ["brown_sugar", "Brown sugar"], ["honey", "Honey"], ["maple", "Maple syrup"], ["simple_syrup", "Simple syrup"] ] },
+  { title: "Syrups & sauces", items: [
+    ["syr_vanilla", "Vanilla syrup"], ["syr_caramel", "Caramel syrup"], ["syr_hazelnut", "Hazelnut syrup"], ["syr_pumpkin", "Pumpkin spice syrup"],
+    ["syr_peppermint", "Peppermint syrup"], ["syr_lavender", "Lavender syrup"], ["syr_toffee", "Toffee nut syrup"], ["syr_gingerbread", "Gingerbread syrup"],
+    ["syr_irish", "Irish cream syrup"], ["syr_coconut", "Coconut syrup"], ["syr_raspberry", "Raspberry syrup"], ["syr_pistachio", "Pistachio syrup"],
+    ["choc_sauce", "Chocolate sauce"], ["white_choc", "White chocolate sauce"], ["choc_spread", "Chocolate hazelnut spread"] ] },
+  { title: "Spices & fruit", items: [
+    ["cinnamon", "Cinnamon"], ["nutmeg", "Nutmeg"], ["cardamom", "Cardamom"], ["ginger", "Ground ginger"], ["cloves", "Ground cloves"],
+    ["turmeric", "Turmeric"], ["cocoa", "Cocoa powder"], ["orange", "Orange"], ["lemon", "Lemon"] ] },
+  { title: "Extracts", items: [
+    ["vanilla_ext", "Vanilla extract"], ["almond_ext", "Almond extract"], ["mint_ext", "Peppermint extract"], ["orange_ext", "Orange extract"],
+    ["lemon_ext", "Lemon extract"], ["coconut_ext", "Coconut extract"], ["hazelnut_ext", "Hazelnut extract"], ["maple_ext", "Maple extract"],
+    ["rum_ext", "Rum extract"], ["caramel_ext", "Caramel extract"], ["raspberry_ext", "Raspberry extract"] ] },
+  { title: "Other extras", items: [
+    ["chai", "Chai (tea bags or concentrate)"], ["matcha", "Matcha powder"], ["tonic", "Tonic water"], ["sparkling", "Sparkling water"],
+    ["eggs", "Eggs"], ["marshmallows", "Marshmallows"], ["coconut_oil", "Coconut oil"] ] }
+];
+var ING = {}; PANTRY.forEach(function (s) { s.items.forEach(function (i) { ING[i[0]] = i[1]; }); });
+var STAPLES = { salt: "Salt", ice: "Ice", water: "Water" };
+var GROUPS = {
+  milk: { label: "Milk", dairy: ["milk_whole", "milk_oat", "milk_soy", "milk_almond", "milk_coconut"], plant: ["milk_oat", "milk_soy", "milk_almond", "milk_coconut", "milk_whole"] },
+  cream: { label: "Cream or half-and-half", dairy: ["half_half", "heavy_cream"], plant: ["half_half", "heavy_cream"] }
+};
+
+var SUBS = {
+  syr_vanilla: [
+    { needs: ["simple_syrup", "vanilla_ext"], how: "Same amount of simple syrup plus ¼ tsp vanilla extract." },
+    { needs: ["sugar", "vanilla_ext"], how: "2 tsp sugar plus ¼ tsp vanilla extract, stirred into the hot coffee." },
+    { needs: ["maple"], how: "Maple syrup, same amount. Warmer and less vanilla-forward." },
+    { needs: ["honey", "vanilla_ext"], how: "2 tsp honey plus a drop of vanilla extract." }],
+  syr_caramel: [
+    { needs: ["brown_sugar", "cream"], how: "Microwave 1 tbsp brown sugar with 1 tbsp cream and a pinch of salt for 20 seconds, then stir. Quick caramel sauce." },
+    { needs: ["condensed"], how: "1 tbsp condensed milk, warmed until lightly golden. Skip any other sugar." },
+    { needs: ["brown_sugar"], how: "1 tbsp brown sugar and a pinch of salt for a caramel-ish note." },
+    { needs: ["maple"], how: "Maple syrup with a pinch of salt." }],
+  syr_hazelnut: [
+    { needs: ["brown_sugar", "vanilla_ext"], how: "2 tsp brown sugar plus ¼ tsp vanilla. Toasty rather than nutty." },
+    { needs: ["syr_vanilla"], how: "Vanilla syrup with a tiny pinch of salt." },
+    { needs: ["choc_sauce"], how: "Chocolate sauce for a gianduja-style mocha." }],
+  syr_pumpkin: [
+    { needs: ["brown_sugar", "cinnamon", "nutmeg"], how: "2 tsp brown sugar, ¼ tsp cinnamon and a pinch of nutmeg. Add ginger or cloves if you have them." },
+    { needs: ["maple", "cinnamon"], how: "2 tsp maple syrup and ¼ tsp cinnamon." },
+    { needs: ["sugar", "cinnamon"], how: "2 tsp sugar and ¼ tsp cinnamon." }],
+  syr_peppermint: [
+    { needs: ["mint_ext", "sugar"], how: "1–2 drops peppermint extract plus 2 tsp sugar. It's strong, so start with one drop." },
+    { needs: ["mint_ext", "simple_syrup"], how: "1–2 drops peppermint extract plus 2 tsp simple syrup." }],
+  syr_lavender: [
+    { needs: ["honey", "vanilla_ext"], how: "2 tsp honey and a drop of vanilla. Floral, though not lavender." },
+    { needs: ["honey"], how: "2 tsp honey for a soft floral sweetness." },
+    { needs: ["syr_vanilla"], how: "Vanilla syrup, same amount." }],
+  choc_sauce: [
+    { needs: ["cocoa", "sugar"], how: "Whisk 1 tbsp cocoa and 1 tbsp sugar with a splash of the hot coffee into a paste." },
+    { needs: ["cocoa", "maple"], how: "1 tbsp cocoa whisked with 1 tbsp maple syrup." },
+    { needs: ["cocoa", "honey"], how: "1 tbsp cocoa whisked with 2 tsp honey." }],
+  cocoa: [
+    { needs: ["choc_sauce"], how: "1 tbsp chocolate sauce in place of the cocoa. Leave out the sugar." }],
+  simple_syrup: [
+    { needs: ["sugar"], how: "Dissolve the same amount of sugar in the hot espresso, or in a splash of hot water for iced drinks." },
+    { needs: ["honey"], how: "Honey, a little less than the syrup amount." },
+    { needs: ["maple"], how: "Maple syrup, same amount." }],
+  sugar: [
+    { needs: ["brown_sugar"], how: "Brown sugar, same amount. Slightly richer." },
+    { needs: ["simple_syrup"], how: "Simple syrup, about 1½ times the amount." },
+    { needs: ["maple"], how: "Maple syrup, same amount." },
+    { needs: ["honey"], how: "Honey, a little less than the sugar amount." }],
+  brown_sugar: [
+    { needs: ["sugar", "maple"], how: "White sugar with a few drops of maple syrup." },
+    { needs: ["sugar"], how: "White sugar, same amount. A bit less depth." },
+    { needs: ["maple"], how: "Maple syrup, same amount." },
+    { needs: ["honey"], how: "Honey, a little less." }],
+  honey: [
+    { needs: ["maple"], how: "Maple syrup, same amount." },
+    { needs: ["brown_sugar"], how: "Brown sugar, a little more than the honey amount." },
+    { needs: ["sugar"], how: "Sugar, a little more than the honey amount." }],
+  maple: [
+    { needs: ["brown_sugar", "vanilla_ext"], how: "Brown sugar plus a drop of vanilla extract." },
+    { needs: ["honey"], how: "Honey, same amount." },
+    { needs: ["brown_sugar"], how: "Brown sugar, same amount." }],
+  cinnamon: [
+    { needs: ["syr_pumpkin"], how: "A teaspoon of pumpkin spice syrup brings the cinnamon along." },
+    { needs: ["nutmeg"], how: "A smaller pinch of nutmeg." },
+    { needs: ["cardamom"], how: "A small pinch of cardamom." }],
+  nutmeg: [{ needs: ["cinnamon"], how: "A pinch of cinnamon." }],
+  cardamom: [
+    { needs: ["cinnamon", "ginger"], how: "A pinch each of cinnamon and ginger." },
+    { needs: ["cinnamon"], how: "A pinch of cinnamon." }],
+  ginger: [
+    { needs: ["cinnamon", "nutmeg"], how: "Extra cinnamon and a pinch of nutmeg." },
+    { needs: ["cinnamon"], how: "Extra cinnamon." }],
+  cloves: [{ needs: ["nutmeg"], how: "A pinch of nutmeg." }, { needs: ["cinnamon"], how: "A pinch of cinnamon." }],
+  vanilla_ext: [
+    { needs: ["syr_vanilla"], how: "1 tsp vanilla syrup, and cut back other sugar a little." },
+    { needs: ["maple"], how: "A few drops of maple syrup." }],
+  mint_ext: [{ needs: ["syr_peppermint"], how: "1 tsp peppermint syrup." }],
+  syr_toffee: [
+    { needs: ["brown_sugar", "butter"], how: "Melt 1 tbsp brown sugar with 1 tsp butter and a pinch of salt, then stir it into the hot coffee." },
+    { needs: ["syr_caramel", "syr_hazelnut"], how: "Half caramel syrup, half hazelnut syrup." },
+    { needs: ["syr_caramel"], how: "Caramel syrup, same amount." },
+    { needs: ["brown_sugar"], how: "1 tbsp brown sugar and a pinch of salt." }],
+  syr_gingerbread: [
+    { needs: ["brown_sugar", "ginger", "cinnamon"], how: "2 tsp brown sugar, ⅛ tsp ginger and ⅛ tsp cinnamon, plus a pinch of cloves if you have them." },
+    { needs: ["syr_pumpkin", "ginger"], how: "Pumpkin spice syrup with an extra pinch of ginger." },
+    { needs: ["syr_pumpkin"], how: "Pumpkin spice syrup, same amount." }],
+  syr_irish: [
+    { needs: ["syr_vanilla", "choc_sauce"], how: "Equal parts vanilla syrup and chocolate sauce. A splash of cream makes it closer." },
+    { needs: ["vanilla_ext", "sugar", "cocoa"], how: "2 tsp sugar, ¼ tsp vanilla extract and ½ tsp cocoa." },
+    { needs: ["syr_vanilla"], how: "Vanilla syrup, same amount." }],
+  syr_coconut: [
+    { needs: ["milk_coconut", "sugar"], how: "Use coconut milk for the milk, and add 2 tsp sugar." },
+    { needs: ["syr_vanilla"], how: "Vanilla syrup, same amount. Not coconutty, but sweet and smooth." }],
+  syr_raspberry: [
+    { needs: ["syr_vanilla"], how: "Vanilla syrup, same amount. It loses the berry, but the drink still works." }],
+  syr_pistachio: [
+    { needs: ["syr_hazelnut", "vanilla_ext"], how: "Hazelnut syrup with a drop of vanilla extract." },
+    { needs: ["syr_hazelnut"], how: "Hazelnut syrup, same amount." },
+    { needs: ["syr_vanilla"], how: "Vanilla syrup with a tiny pinch of salt." }],
+  white_choc: [
+    { needs: ["condensed", "syr_vanilla"], how: "1 tbsp condensed milk plus ½ tsp vanilla syrup." },
+    { needs: ["condensed", "vanilla_ext"], how: "1 tbsp condensed milk plus a drop of vanilla extract." },
+    { needs: ["syr_vanilla"], how: "Vanilla syrup, a little more than the sauce amount." }],
+  choc_spread: [
+    { needs: ["choc_sauce", "syr_hazelnut"], how: "Equal parts chocolate sauce and hazelnut syrup." },
+    { needs: ["choc_sauce"], how: "Chocolate sauce, same amount." },
+    { needs: ["cocoa", "sugar"], how: "1 tbsp cocoa and 1 tbsp sugar whisked into the hot coffee." }],
+  butter: [
+    { needs: ["coconut_oil"], how: "Coconut oil, same amount." },
+    { needs: ["heavy_cream"], how: "2 tbsp heavy cream. Creamy, though less rich." }],
+  coconut_oil: [{ needs: ["butter"], how: "Butter, same amount." }],
+  lemon: [{ needs: ["orange"], how: "A strip of orange peel. Sweeter and softer." }],
+  marshmallows: [{ needs: ["whipped"], how: "A spoonful of whipped cream on top." }],
+  tonic: [
+    { needs: ["sparkling", "simple_syrup"], how: "Sparkling water with ½ tsp simple syrup. Add a squeeze of lemon if you have one." },
+    { needs: ["sparkling"], how: "Sparkling water. Less bitter, still refreshing." }],
+  sparkling: [{ needs: ["tonic"], how: "Tonic water. More bitter, so skip the syrup." }],
+  chai: [
+    { needs: ["cinnamon", "cardamom", "ginger"], how: "Warm the milk with a pinch each of cinnamon, cardamom and ginger. Add a black tea bag if you have one." },
+    { needs: ["cinnamon", "cardamom"], how: "Warm the milk with a pinch each of cinnamon and cardamom." }],
+  milk_coconut: [
+    { needs: ["milk_oat"], how: "Oat milk, same amount. Creamy, minus the coconut." },
+    { needs: ["milk"], how: "Any milk you have, same amount." }],
+  orange: [{ needs: ["cinnamon"], how: "Leave it out and add an extra pinch of cinnamon." }],
+  condensed: [
+    { needs: ["milk", "sugar"], how: "3 tbsp milk with 1½ tbsp sugar stirred until dissolved. Thinner but close." },
+    { needs: ["cream", "sugar"], how: "2 tbsp cream with 1 tbsp sugar, stirred until dissolved." },
+    { needs: ["milk", "maple"], how: "3 tbsp milk with 1 tbsp maple syrup." }],
+  cream: [
+    { needs: ["milk_whole"], how: "Whole milk, a little more of it. Lighter body." },
+    { needs: ["milk_coconut"], how: "Coconut milk, the canned kind if you have it." },
+    { needs: ["condensed"], how: "Condensed milk, about half the amount. Skip other sugar." }],
+  milk: [
+    { needs: ["cream"], how: "Half-and-half or cream, thinned with an equal amount of water." },
+    { needs: ["condensed"], how: "1 tbsp condensed milk thinned with hot water. Sweet, so skip other sugar." }],
+  whipped: [{ needs: ["heavy_cream", "sugar"], how: "Whisk cold heavy cream with a little sugar until soft peaks form." }],
+  ice_cream: [
+    { needs: ["heavy_cream", "sugar", "vanilla_ext"], how: "Whip cold heavy cream with sugar and vanilla until thick, then spoon it on." },
+    { needs: ["whipped"], how: "A big spoonful of whipped cream." }]
+};
+
+/* Extracts: strong, unsweetened flavor. A few drops plus a sweetener stands in for a flavored syrup. */
+function addSub(k, sub, first) { SUBS[k] = SUBS[k] || []; if (first) SUBS[k].unshift(sub); else SUBS[k].push(sub); }
+[
+  ["syr_coconut", "coconut_ext", "coconut"], ["syr_hazelnut", "hazelnut_ext", "hazelnut"], ["syr_caramel", "caramel_ext", "caramel"],
+  ["syr_raspberry", "raspberry_ext", "raspberry"], ["syr_pistachio", "almond_ext", "almond (closest to pistachio)"], ["syr_toffee", "caramel_ext", "caramel"]
+].forEach(function (x) {
+  addSub(x[0], { needs: [x[1], "sugar"], how: "¼ tsp " + x[2] + " extract plus 2 tsp sugar, stirred into the hot coffee." });
+  addSub(x[0], { needs: [x[1], "simple_syrup"], how: "¼ tsp " + x[2] + " extract plus 2 tsp simple syrup." });
+});
+addSub("syr_irish", { needs: ["rum_ext", "syr_vanilla"], how: "Vanilla syrup with 2 drops of rum extract for that boozy-tasting note, minus the alcohol." });
+addSub("syr_toffee", { needs: ["rum_ext", "brown_sugar"], how: "1 tbsp brown sugar with a drop of rum extract, butterscotch-style." });
+addSub("maple", { needs: ["maple_ext", "sugar"], how: "2 drops maple extract plus the same amount of sugar." }, true);
+addSub("maple", { needs: ["maple_ext", "brown_sugar"], how: "2 drops maple extract plus brown sugar." }, true);
+addSub("orange", { needs: ["orange_ext"], how: "1–2 drops orange extract instead of the peel." }, true);
+addSub("lemon", { needs: ["lemon_ext"], how: "1–2 drops lemon extract instead of the peel." }, true);
+addSub("vanilla_ext", { needs: ["almond_ext"], how: "Half as much almond extract. Different, but just as cozy." });
+SUBS.almond_ext = [{ needs: ["vanilla_ext"], how: "Vanilla extract, twice as much." }, { needs: ["syr_hazelnut"], how: "1 tsp hazelnut syrup, and cut back other sugar." }];
+SUBS.orange_ext = [{ needs: ["orange"], how: "A strip of orange zest, rubbed on the rim and dropped in." }];
+SUBS.lemon_ext = [{ needs: ["lemon"], how: "A strip of lemon zest." }];
+SUBS.coconut_ext = [{ needs: ["syr_coconut"], how: "1 tsp coconut syrup, and cut back other sugar." }, { needs: ["milk_coconut"], how: "Use coconut milk as the milk." }];
+SUBS.hazelnut_ext = [{ needs: ["syr_hazelnut"], how: "1 tsp hazelnut syrup, and cut back other sugar." }, { needs: ["choc_spread"], how: "1 tsp chocolate hazelnut spread." }];
+SUBS.maple_ext = [{ needs: ["maple"], how: "1 tsp maple syrup, and cut back other sugar." }];
+SUBS.rum_ext = [{ needs: ["vanilla_ext"], how: "Vanilla extract, same amount. Warm, without the rum note." }];
+SUBS.caramel_ext = [{ needs: ["syr_caramel"], how: "1 tsp caramel syrup, and cut back other sugar." }, { needs: ["brown_sugar"], how: "Swap the sugar for brown sugar." }];
+SUBS.raspberry_ext = [{ needs: ["syr_raspberry"], how: "1 tsp raspberry syrup, and cut back other sugar." }];
+var EXTRACT_FLAVOR = { vanilla_ext: "vanilla", almond_ext: "nutty", hazelnut_ext: "nutty", coconut_ext: "nutty", mint_ext: "mint", orange_ext: "citrus", lemon_ext: "citrus",
+  maple_ext: "honey", rum_ext: "spiced", caramel_ext: "caramel", raspberry_ext: "fruity" };
+
+var BASES = {
+  esp: { label: "Espresso", direct: ["espresso", "pod_esp", "moka", "aeropress"], alt: ["pod_brew", "press", "pourover", "drip", "instant"] },
+  brewed: { label: "Brewed coffee", direct: ["pourover", "drip", "press", "pod_brew", "aeropress", "instant"], alt: ["espresso", "pod_esp", "moka"] },
+  inst: { label: "Instant coffee", direct: ["instant"], alt: [], unit: "tbsp" },
+  cold: { label: "Cold brew", direct: ["coldbrewer", "jar", "press"], alt: ["espresso", "pod_esp", "moka", "aeropress", "pourover", "drip", "pod_brew", "instant"] }
+};
+
+var FLAVORS = [
+  { id: "classic", label: "Classic coffee taste" }, { id: "chocolate", label: "Chocolate" }, { id: "vanilla", label: "Vanilla" },
+  { id: "caramel", label: "Caramel" }, { id: "nutty", label: "Nutty" }, { id: "spiced", label: "Warm spice" },
+  { id: "honey", label: "Maple & honey" }, { id: "citrus", label: "Citrus" }, { id: "fruity", label: "Berry & fruit" }, { id: "floral", label: "Floral" }, { id: "mint", label: "Mint" }
+];
+var FL = {}; FLAVORS.forEach(function (f) { FL[f.id] = f.label; });
+
+var FROTH = "{froth}";
+/* Recipes: amounts are per mug. ing: [id, qty, unit, optional, note] */
+var RECIPES = [
+  { id: "latte", name: "Classic latte", blurb: "Espresso and lots of silky steamed milk. The everyday default.", temp: "hot", strength: 2, milk: 2, sweet: 0, flavors: [], base: ["esp", 60],
+    ing: [["milk", 240, "ml"]],
+    steps: ["Heat the milk to 60–65°C (140–150°F), hot to touch but not boiling. " + FROTH, "Pour the milk into the espresso, holding back the foam with a spoon, then spoon a thin layer on top."] },
+  { id: "cappuccino", name: "Cappuccino", blurb: "Equal parts espresso and milk under a thick cap of foam.", temp: "hot", strength: 2, milk: 1, sweet: 0, flavors: [], base: ["esp", 60],
+    ing: [["milk", 120, "ml"], ["cocoa", 0.25, "tsp", true, "for dusting"]],
+    steps: ["Heat the milk and froth it until it roughly doubles in volume. " + FROTH, "Pour in the milk, then pile the foam on top. Dust with cocoa if you like."] },
+  { id: "flatwhite", name: "Flat white", blurb: "A strong, velvety espresso drink with just a little milk.", temp: "hot", strength: 3, milk: 1, sweet: 0, flavors: [], base: ["esp", 60],
+    ing: [["milk", 120, "ml"]],
+    steps: ["Heat the milk and froth it only lightly, so it's glossy with tiny bubbles. " + FROTH, "Pour it steadily into the espresso for a thin, smooth top."] },
+  { id: "cortado", name: "Cortado", blurb: "Espresso cut with an equal splash of warm milk. Small and punchy.", temp: "hot", strength: 3, milk: 1, sweet: 0, flavors: ["classic"], base: ["esp", 60],
+    ing: [["milk", 60, "ml"]],
+    steps: ["Warm the milk until hot but not foamy.", "Pour it into the espresso and drink it while it's hot."] },
+  { id: "americano", name: "Americano", blurb: "Espresso stretched with hot water. Clean, black and bold.", temp: "hot", strength: 2, milk: 0, sweet: 0, flavors: ["classic"], base: ["esp", 60],
+    ing: [["water", 180, "ml", false, "just off the boil"]],
+    steps: ["Pour the hot water into a mug first, then add the espresso on top to keep the crema."] },
+  { id: "vanilla_latte", name: "Vanilla latte", blurb: "A classic latte with a smooth vanilla sweetness.", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: ["vanilla"], base: ["esp", 60],
+    ing: [["syr_vanilla", 2, "tsp"], ["milk", 240, "ml"]],
+    steps: ["Stir the vanilla syrup into the espresso.", "Heat the milk to 60–65°C (140–150°F). " + FROTH, "Pour in the milk and finish with a spoon of foam."] },
+  { id: "caramel_latte", name: "Salted caramel latte", blurb: "Caramel and a pinch of salt for a sweet-savory treat.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["caramel"], base: ["esp", 60],
+    ing: [["syr_caramel", 1, "tbsp"], ["salt", 1, "pinch"], ["milk", 240, "ml"], ["whipped", 2, "tbsp", true, "to top"]],
+    steps: ["Stir the caramel and salt into the espresso.", "Heat the milk to 60–65°C (140–150°F). " + FROTH, "Pour in the milk. Add whipped cream if you're treating yourself."] },
+  { id: "hazelnut_latte", name: "Hazelnut latte", blurb: "Toasty, nutty and mellow.", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: ["nutty"], base: ["esp", 60],
+    ing: [["syr_hazelnut", 1, "tbsp"], ["milk", 240, "ml"]],
+    steps: ["Stir the hazelnut syrup into the espresso.", "Heat the milk to 60–65°C (140–150°F). " + FROTH, "Pour in the milk and top with foam."] },
+  { id: "maple_latte", name: "Maple cinnamon latte", blurb: "Maple sweetness and a dusting of cinnamon. Built for cold mornings.", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: ["honey", "spiced"], base: ["esp", 60],
+    ing: [["maple", 1.5, "tsp"], ["milk", 210, "ml"], ["cinnamon", 1, "pinch", false, "for the top"]],
+    steps: ["Stir the maple syrup into the hot espresso so it dissolves.", "Heat the milk to 60–65°C (140–150°F). " + FROTH, "Pour in the milk, holding back the foam, then spoon it on top.", "Dust with cinnamon."] },
+  { id: "honey_cardamom", name: "Honey cardamom latte", blurb: "Floral honey and fragrant cardamom warmed into the milk.", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: ["honey", "spiced", "floral"], base: ["esp", 60],
+    ing: [["honey", 2, "tsp"], ["cardamom", 0.125, "tsp"], ["milk", 210, "ml"], ["vanilla_ext", 0.25, "tsp", true]],
+    steps: ["Warm the milk with the cardamom (and vanilla, if using) so the spice infuses. " + FROTH, "Stir the honey into the espresso.", "Pour in the spiced milk."] },
+  { id: "mocha", name: "Mocha", blurb: "Half hot chocolate, half latte.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["chocolate"], base: ["esp", 60],
+    ing: [["choc_sauce", 1, "tbsp"], ["milk", 210, "ml"], ["whipped", 2, "tbsp", true, "to top"]],
+    steps: ["Stir the chocolate into the hot espresso until smooth.", "Heat the milk to 60–65°C (140–150°F). " + FROTH, "Pour in the milk and top with whipped cream if you like."] },
+  { id: "spiced_mocha", name: "Spiced cocoa mocha", blurb: "Cocoa, cinnamon and nutmeg. Less sweet than a regular mocha.", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: ["chocolate", "spiced"], base: ["esp", 60],
+    ing: [["cocoa", 2, "tsp"], ["sugar", 2, "tsp"], ["cinnamon", 0.125, "tsp"], ["nutmeg", 1, "pinch", true], ["milk", 210, "ml"]],
+    steps: ["Whisk the cocoa, sugar and spices into the hot espresso until there are no lumps.", "Heat the milk. " + FROTH, "Pour in the milk and stir."] },
+  { id: "pumpkin", name: "Pumpkin spice latte", blurb: "The autumn classic, made at home.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["spiced"], base: ["esp", 60],
+    ing: [["syr_pumpkin", 1, "tbsp"], ["milk", 240, "ml"], ["whipped", 2, "tbsp", true, "to top"], ["cinnamon", 1, "pinch", true, "for the top"]],
+    steps: ["Stir the pumpkin spice syrup into the espresso.", "Heat the milk. " + FROTH, "Pour in the milk, add whipped cream and a pinch of cinnamon."] },
+  { id: "peppermint_mocha", name: "Peppermint mocha", blurb: "Chocolate and cool peppermint. A December favorite.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["mint", "chocolate"], base: ["esp", 60],
+    ing: [["choc_sauce", 1, "tbsp"], ["syr_peppermint", 2, "tsp"], ["milk", 210, "ml"], ["whipped", 2, "tbsp", true, "to top"]],
+    steps: ["Stir the chocolate and peppermint into the espresso.", "Heat the milk. " + FROTH, "Pour in the milk and finish with whipped cream."] },
+  { id: "lavender", name: "Lavender latte", blurb: "Gently floral. Oat milk suits it best.", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: ["floral"], base: ["esp", 60],
+    ing: [["syr_lavender", 2, "tsp"], ["milk", 240, "ml", false, "oat is best"]],
+    steps: ["Stir the lavender syrup into the espresso.", "Heat the milk. " + FROTH, "Pour in the milk and top with foam."] },
+  { id: "gingerbread", name: "Homemade gingerbread latte", blurb: "Brown sugar, ginger and warm spice, like a cookie in a mug.", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: ["spiced"], base: ["esp", 60],
+    ing: [["brown_sugar", 2, "tsp"], ["ginger", 0.125, "tsp"], ["cinnamon", 0.125, "tsp"], ["cloves", 1, "pinch", true], ["milk", 210, "ml"], ["whipped", 2, "tbsp", true, "to top"]],
+    steps: ["Stir the brown sugar and spices into the hot espresso.", "Heat the milk. " + FROTH, "Pour in the milk. Whipped cream optional."] },
+  { id: "aulait", name: "Café au lait", blurb: "Brewed coffee and hot milk, half and half. Easy and comforting.", temp: "hot", strength: 1, milk: 2, sweet: 0, flavors: ["classic"], base: ["brewed", 150],
+    ing: [["milk", 150, "ml"]],
+    steps: ["Heat the milk until steaming.", "Pour the coffee and the milk into the mug at the same time."] },
+  { id: "orange_spice", name: "Cinnamon orange coffee", blurb: "Black coffee infused with cinnamon, brown sugar and orange peel, in the style of café de olla.", temp: "hot", strength: 2, milk: 0, sweet: 1, flavors: ["spiced", "citrus"], base: ["brewed", 240],
+    ing: [["brown_sugar", 2, "tsp"], ["cinnamon", 0.25, "tsp"], ["orange", 1, "strip", false, "peel only"], ["cloves", 1, "pinch", true]],
+    steps: ["Put the brown sugar, cinnamon, orange peel and cloves in the mug.", "Pour the hot coffee over them, stir, and let it sit for 3 minutes.", "Fish out the peel and drink."] },
+  { id: "honey_black", name: "Honey cinnamon black coffee", blurb: "Plain coffee with a touch of honey and spice. No milk needed.", temp: "hot", strength: 2, milk: 0, sweet: 1, flavors: ["honey", "spiced"], base: ["brewed", 240],
+    ing: [["honey", 1, "tsp"], ["cinnamon", 1, "pinch"]],
+    steps: ["Stir the honey and cinnamon into the hot coffee until the honey dissolves."] },
+  { id: "with_cream", name: "Strong coffee with cream", blurb: "A full-bodied mug with a swirl of cream.", temp: "hot", strength: 3, milk: 1, sweet: 0, flavors: ["classic"], base: ["brewed", 250],
+    ing: [["cream", 1.5, "tbsp"]],
+    steps: ["Pour the coffee and swirl in the cream."] },
+  { id: "bombon", name: "Café bombón", blurb: "Espresso layered over sweet condensed milk. Rich and dessert-like.", temp: "hot", strength: 3, milk: 1, sweet: 2, flavors: ["caramel"], base: ["esp", 60],
+    ing: [["condensed", 1.5, "tbsp"]],
+    steps: ["Spoon the condensed milk into a small glass.", "Pour the espresso slowly over the back of a spoon so it sits on top.", "Stir before drinking."] },
+  { id: "viet_iced", name: "Vietnamese-style iced coffee", blurb: "Very strong coffee and condensed milk over ice.", temp: "iced", strength: 3, milk: 1, sweet: 2, flavors: ["caramel"], base: ["esp", 90],
+    ing: [["condensed", 2, "tbsp"], ["ice", 1, "glass", false, "a full glass"]],
+    steps: ["Stir the condensed milk into the hot coffee until smooth.", "Pour over a full glass of ice and stir again."] },
+  { id: "iced_latte", name: "Iced latte", blurb: "Espresso and cold milk over ice.", temp: "iced", strength: 2, milk: 2, sweet: 0, flavors: [], base: ["esp", 60],
+    ing: [["milk", 180, "ml", false, "cold"], ["simple_syrup", 2, "tsp", true], ["ice", 1, "glass"]],
+    steps: ["Fill a glass with ice and pour in the cold milk.", "Stir any syrup into the espresso, then pour it over the milk."] },
+  { id: "iced_mocha", name: "Iced mocha", blurb: "Chocolate, espresso and cold milk.", temp: "iced", strength: 2, milk: 2, sweet: 2, flavors: ["chocolate"], base: ["esp", 60],
+    ing: [["choc_sauce", 1, "tbsp"], ["milk", 180, "ml", false, "cold"], ["ice", 1, "glass"], ["whipped", 2, "tbsp", true, "to top"]],
+    steps: ["Whisk the chocolate into the hot espresso.", "Fill a glass with ice and the cold milk, then pour the chocolate espresso over."] },
+  { id: "caramel_macchiato", name: "Iced caramel macchiato", blurb: "Vanilla milk, espresso floated on top, and a caramel drizzle.", temp: "iced", strength: 2, milk: 2, sweet: 2, flavors: ["caramel", "vanilla"], base: ["esp", 60],
+    ing: [["syr_vanilla", 2, "tsp"], ["milk", 180, "ml", false, "cold"], ["syr_caramel", 1, "tsp", false, "to drizzle"], ["ice", 1, "glass"]],
+    steps: ["Stir the vanilla syrup into the cold milk and pour it over a glass of ice.", "Pour the espresso slowly on top so it floats.", "Drizzle the caramel over the top."] },
+  { id: "shaken", name: "Brown sugar shaken espresso", blurb: "Espresso shaken with brown sugar and cinnamon, topped with oat milk.", temp: "iced", strength: 2, milk: 1, sweet: 1, flavors: ["spiced"], base: ["esp", 60],
+    ing: [["brown_sugar", 2, "tsp"], ["cinnamon", 1, "pinch"], ["milk", 120, "ml", false, "oat is best"], ["ice", 1, "glass"]],
+    steps: ["Stir the brown sugar and cinnamon into the hot espresso until dissolved.", "Shake it hard with a handful of ice in a sealed jar for 15 seconds.", "Pour into a glass of ice and top with the milk."] },
+  { id: "sweet_cream_cold", name: "Vanilla sweet cream cold brew", blurb: "Smooth cold brew under a float of vanilla cream.", temp: "iced", strength: 2, milk: 1, sweet: 1, flavors: ["vanilla"], base: ["cold", 180],
+    ing: [["cream", 2, "tbsp"], ["milk", 1, "tbsp"], ["syr_vanilla", 2, "tsp"], ["ice", 1, "glass"]],
+    steps: ["Whisk the cream, milk and vanilla syrup until frothy.", "Pour the cold brew over a glass of ice.", "Pour the vanilla cream on top and let it cascade."] },
+  { id: "coconut_cold", name: "Coconut iced coffee", blurb: "Cold brew and creamy coconut milk. Tropical and not too sweet.", temp: "iced", strength: 2, milk: 1, sweet: 0, flavors: ["nutty"], base: ["cold", 180],
+    ing: [["milk_coconut", 90, "ml"], ["simple_syrup", 1, "tsp", true], ["ice", 1, "glass"]],
+    steps: ["Fill a glass with ice and pour in the cold brew.", "Stir in the coconut milk and syrup, if using."] },
+  { id: "affogato", name: "Affogato", blurb: "A scoop of vanilla ice cream drowned in hot espresso. Dessert and coffee in one.", temp: "any", strength: 3, milk: 1, sweet: 2, flavors: ["vanilla"], base: ["esp", 60],
+    ing: [["ice_cream", 1, "scoop"]],
+    steps: ["Put the ice cream in a small glass or bowl.", "Pour the hot espresso over it and eat right away with a spoon."] },
+
+  /* Espresso classics */
+  { id: "macchiato", name: "Espresso macchiato", blurb: "A double shot marked with a spoonful of milk foam.", temp: "hot", strength: 3, milk: 1, sweet: 0, flavors: ["classic"], base: ["esp", 60],
+    ing: [["milk", 30, "ml"]],
+    steps: ["Froth the milk until thick. " + FROTH, "Spoon a small dollop of foam onto the espresso."] },
+  { id: "piccolo", name: "Piccolo latte", blurb: "A tiny latte: one short shot and a little silky milk.", temp: "hot", strength: 3, milk: 1, sweet: 0, flavors: ["classic"], base: ["esp", 30],
+    ing: [["milk", 60, "ml"]],
+    steps: ["Heat and lightly froth the milk. " + FROTH, "Pour it into the espresso in a small glass."] },
+  { id: "cubano", name: "Café cubano", blurb: "Espresso whipped with sugar into a sweet, creamy foam called espumita.", temp: "hot", strength: 3, milk: 0, sweet: 2, flavors: ["caramel"], base: ["esp", 60],
+    ing: [["sugar", 2, "tsp"]],
+    steps: ["Put the sugar in a cup and add the first teaspoon of espresso as it comes out.", "Beat the sugar and espresso hard with a spoon until pale and thick, about 1 minute.", "Pour in the rest of the espresso and stir gently so the foam rises to the top."] },
+  { id: "red_eye", name: "Red eye", blurb: "Brewed coffee with a shot of espresso dropped in. For mornings that need it.", temp: "hot", strength: 3, milk: 0, sweet: 0, flavors: ["classic"], base: ["brewed", 240],
+    ing: [],
+    steps: ["Pull or brew a single shot of espresso (or 30 ml of very strong coffee).", "Pour it into the mug of brewed coffee."] },
+  { id: "romano", name: "Caffè romano", blurb: "Espresso served with a twist of lemon peel. Bright and clean.", temp: "hot", strength: 3, milk: 0, sweet: 0, flavors: ["citrus"], base: ["esp", 60],
+    ing: [["lemon", 1, "strip", false, "peel only"], ["sugar", 1, "tsp", true]],
+    steps: ["Rub the lemon peel around the rim of the cup.", "Pour in the espresso and drop the peel in. Add sugar if you like."] },
+  { id: "breve", name: "Breve latte", blurb: "A latte made with half-and-half. Rich and very creamy.", temp: "hot", strength: 2, milk: 2, sweet: 0, flavors: [], base: ["esp", 60],
+    ing: [["cream", 180, "ml", false, "half-and-half is best"]],
+    steps: ["Heat the half-and-half gently until steaming; it scorches faster than milk. " + FROTH, "Pour it into the espresso."] },
+  { id: "shakerato", name: "Shakerato", blurb: "Espresso shaken hard with ice until frothy, served straight up.", temp: "iced", strength: 3, milk: 0, sweet: 1, flavors: ["classic"], base: ["esp", 60],
+    ing: [["simple_syrup", 1, "tsp"], ["ice", 1, "glass"]],
+    steps: ["Put the espresso, syrup and a big handful of ice in a sealed jar.", "Shake hard for 20 seconds.", "Strain into a chilled glass, leaving the ice behind."] },
+  { id: "iced_americano", name: "Iced americano", blurb: "Espresso and cold water over ice. Crisp and simple.", temp: "iced", strength: 2, milk: 0, sweet: 0, flavors: ["classic"], base: ["esp", 60],
+    ing: [["water", 150, "ml", false, "cold"], ["ice", 1, "glass"]],
+    steps: ["Fill a glass with ice and cold water.", "Pour the espresso over the top."] },
+
+  /* Flavored lattes */
+  { id: "cinnamon_dolce", name: "Cinnamon dolce latte", blurb: "Brown sugar and cinnamon, topped with cream and more cinnamon.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["spiced"], base: ["esp", 60],
+    ing: [["brown_sugar", 1, "tbsp"], ["cinnamon", 0.25, "tsp"], ["milk", 210, "ml"], ["whipped", 2, "tbsp", true, "to top"]],
+    steps: ["Stir the brown sugar and cinnamon into the hot espresso until dissolved.", "Heat the milk. " + FROTH, "Pour in the milk, add whipped cream and a final pinch of cinnamon."] },
+  { id: "cinnamon_roll", name: "Cinnamon roll latte", blurb: "Vanilla, brown sugar and cinnamon. Tastes like the bakery.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["spiced", "vanilla"], base: ["esp", 60],
+    ing: [["brown_sugar", 2, "tsp"], ["cinnamon", 0.25, "tsp"], ["vanilla_ext", 0.25, "tsp"], ["milk", 210, "ml"], ["whipped", 2, "tbsp", true, "to top"]],
+    steps: ["Stir the brown sugar, cinnamon and vanilla into the hot espresso.", "Heat the milk. " + FROTH, "Pour in the milk and top with whipped cream."] },
+  { id: "toffee_nut", name: "Toffee nut latte", blurb: "Buttery toffee and toasted nuts. A winter café favorite.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["caramel", "nutty"], base: ["esp", 60],
+    ing: [["syr_toffee", 1, "tbsp"], ["milk", 240, "ml"], ["whipped", 2, "tbsp", true, "to top"]],
+    steps: ["Stir the toffee nut syrup into the espresso.", "Heat the milk. " + FROTH, "Pour in the milk. Whipped cream optional."] },
+  { id: "irish_cream", name: "Irish cream latte", blurb: "Vanilla and cocoa notes, no alcohol. Smooth and dessert-like.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["vanilla", "chocolate"], base: ["esp", 60],
+    ing: [["syr_irish", 1, "tbsp"], ["milk", 240, "ml"]],
+    steps: ["Stir the Irish cream syrup into the espresso.", "Heat the milk. " + FROTH, "Pour in the milk and top with foam."] },
+  { id: "pistachio", name: "Pistachio latte", blurb: "Nutty, a little salty-sweet, and pale green-gold.", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: ["nutty"], base: ["esp", 60],
+    ing: [["syr_pistachio", 1, "tbsp"], ["milk", 240, "ml"], ["salt", 1, "pinch", true]],
+    steps: ["Stir the pistachio syrup (and a pinch of salt) into the espresso.", "Heat the milk. " + FROTH, "Pour in the milk and top with foam."] },
+  { id: "white_mocha", name: "White chocolate mocha", blurb: "Creamy white chocolate melted into espresso and milk.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["vanilla", "chocolate"], base: ["esp", 60],
+    ing: [["white_choc", 1, "tbsp"], ["milk", 210, "ml"], ["whipped", 2, "tbsp", true, "to top"]],
+    steps: ["Stir the white chocolate sauce into the hot espresso until smooth.", "Heat the milk. " + FROTH, "Pour in the milk and top with whipped cream."] },
+  { id: "raspberry_mocha", name: "Raspberry mocha", blurb: "Dark chocolate and raspberry, like a chocolate truffle.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["chocolate", "fruity"], base: ["esp", 60],
+    ing: [["choc_sauce", 1, "tbsp"], ["syr_raspberry", 2, "tsp"], ["milk", 210, "ml"], ["whipped", 2, "tbsp", true, "to top"]],
+    steps: ["Stir the chocolate and raspberry syrup into the espresso.", "Heat the milk. " + FROTH, "Pour in the milk and top with whipped cream."] },
+  { id: "hazelnut_choc", name: "Chocolate hazelnut latte", blurb: "Chocolate hazelnut spread melted into a latte.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["chocolate", "nutty"], base: ["esp", 60],
+    ing: [["choc_spread", 1, "tbsp"], ["milk", 210, "ml"]],
+    steps: ["Stir the spread into the hot espresso until it melts completely.", "Heat the milk. " + FROTH, "Pour in the milk and stir."] },
+  { id: "smores", name: "S'mores mocha", blurb: "Mocha topped with toasted marshmallows. Campfire in a mug.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["chocolate"], base: ["esp", 60],
+    ing: [["choc_sauce", 1, "tbsp"], ["milk", 210, "ml"], ["marshmallows", 4, "piece"]],
+    steps: ["Stir the chocolate into the hot espresso.", "Heat the milk. " + FROTH, "Pour in the milk and float the marshmallows on top.", "Toast them with a kitchen torch, or under the broiler for 30 seconds in an oven-safe mug."] },
+  { id: "coconut_mocha", name: "Coconut mocha", blurb: "Chocolate and coconut. Like a candy bar, but coffee.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["chocolate", "nutty"], base: ["esp", 60],
+    ing: [["choc_sauce", 1, "tbsp"], ["syr_coconut", 2, "tsp"], ["milk", 210, "ml"]],
+    steps: ["Stir the chocolate and coconut syrup into the espresso.", "Heat the milk. " + FROTH, "Pour in the milk and stir."] },
+  { id: "dirty_chai", name: "Dirty chai latte", blurb: "Spiced chai latte with a shot of espresso.", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: ["spiced"], base: ["esp", 30],
+    ing: [["chai", 1, "piece", false, "1 tea bag, or 60 ml concentrate"], ["milk", 210, "ml"], ["honey", 1, "tsp", true]],
+    steps: ["Steep the chai in the hot milk for 4 minutes (or stir in the concentrate). " + FROTH, "Add honey if you like, then pour in the espresso."] },
+  { id: "golden", name: "Golden espresso latte", blurb: "Turmeric, ginger and honey with a shot of espresso. Warming and earthy.", temp: "hot", strength: 1, milk: 2, sweet: 1, flavors: ["spiced", "honey"], base: ["esp", 30],
+    ing: [["turmeric", 0.5, "tsp"], ["ginger", 0.125, "tsp"], ["cinnamon", 1, "pinch"], ["honey", 2, "tsp"], ["milk", 240, "ml"]],
+    steps: ["Whisk the turmeric, ginger, cinnamon and honey into the milk and heat until steaming. " + FROTH, "Pour into the espresso."] },
+  { id: "cardamom_black", name: "Cardamom coffee", blurb: "Light coffee brewed with cardamom, in the style of Arabic qahwa.", temp: "hot", strength: 1, milk: 0, sweet: 0, flavors: ["spiced", "floral"], base: ["brewed", 200],
+    ing: [["cardamom", 0.5, "tsp"]],
+    steps: ["Add the cardamom to the grounds before brewing (or stir it into the hot coffee and let it sit 3 minutes).", "Serve in small cups, unsweetened."] },
+  { id: "bulletproof", name: "Butter coffee", blurb: "Coffee blended with butter until creamy and frothy, bulletproof-style.", temp: "hot", strength: 2, milk: 1, sweet: 0, flavors: ["classic"], base: ["brewed", 240],
+    ing: [["butter", 1, "tbsp"], ["coconut_oil", 1, "tsp", true]],
+    steps: ["Put the hot coffee, butter and oil in a blender (or use a frother).", "Blend for 20 seconds until it looks like a latte. Vent the lid; hot liquid expands."] },
+  { id: "egg_coffee", name: "Vietnamese egg coffee", blurb: "Hot coffee under a thick, custardy egg-yolk cream.", temp: "hot", strength: 3, milk: 1, sweet: 2, flavors: ["vanilla", "caramel"], base: ["esp", 60],
+    ing: [["eggs", 1, "piece", false, "yolk only; pasteurized if you prefer"], ["condensed", 2, "tbsp"], ["vanilla_ext", 1, "pinch", true]],
+    steps: ["Whisk the egg yolk and condensed milk hard for 3–5 minutes until pale, thick and fluffy.", "Pour the hot coffee into a small cup sitting in a bowl of hot water to keep it warm.", "Spoon the egg cream on top and eat the first bites with a spoon."] },
+
+  /* Extract recipes */
+  { id: "orange_mocha", name: "Orange mocha", blurb: "Dark chocolate and orange, like a chocolate orange in a mug.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["chocolate", "citrus"], base: ["esp", 60],
+    ing: [["choc_sauce", 1, "tbsp"], ["orange_ext", 2, "drop"], ["milk", 210, "ml"], ["whipped", 2, "tbsp", true, "to top"]],
+    steps: ["Stir the chocolate and orange extract into the hot espresso.", "Heat the milk. " + FROTH, "Pour in the milk and top with whipped cream."] },
+  { id: "amaretto_latte", name: "Almond amaretto-style latte", blurb: "Almond and brown sugar with the flavor of amaretto, no alcohol.", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: ["nutty"], base: ["esp", 60],
+    ing: [["almond_ext", 0.125, "tsp"], ["brown_sugar", 2, "tsp"], ["milk", 210, "ml"]],
+    steps: ["Stir the almond extract and brown sugar into the hot espresso.", "Heat the milk. " + FROTH, "Pour in the milk and top with foam."] },
+  { id: "coconut_cream_latte", name: "Toasted coconut latte", blurb: "Coconut extract and a little sugar in a creamy latte.", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: ["nutty"], base: ["esp", 60],
+    ing: [["coconut_ext", 0.25, "tsp"], ["sugar", 2, "tsp"], ["milk", 240, "ml"]],
+    steps: ["Stir the coconut extract and sugar into the hot espresso.", "Heat the milk. " + FROTH, "Pour in the milk."] },
+  { id: "butter_rum", name: "Butter rum latte", blurb: "Brown sugar, butter and rum extract. Cozy and alcohol-free.", temp: "hot", strength: 2, milk: 2, sweet: 2, flavors: ["caramel", "spiced"], base: ["esp", 60],
+    ing: [["brown_sugar", 1, "tbsp"], ["butter", 1, "tsp"], ["rum_ext", 3, "drop"], ["nutmeg", 1, "pinch", true], ["milk", 210, "ml"]],
+    steps: ["Stir the brown sugar, butter and rum extract into the hot espresso until melted.", "Heat the milk. " + FROTH, "Pour in the milk and finish with a pinch of nutmeg."] },
+  { id: "maple_pecan", name: "Maple nut cold brew", blurb: "Cold brew with maple and a hint of almond.", temp: "iced", strength: 2, milk: 1, sweet: 1, flavors: ["honey", "nutty"], base: ["cold", 180],
+    ing: [["maple", 2, "tsp"], ["almond_ext", 1, "drop"], ["milk", 60, "ml"], ["ice", 1, "glass"]],
+    steps: ["Stir the maple and almond extract into the cold brew.", "Pour over ice and top with the milk."] },
+  { id: "lemon_cream_cold", name: "Lemon cream cold brew", blurb: "Cold brew under a float of lightly lemony sweet cream.", temp: "iced", strength: 2, milk: 1, sweet: 1, flavors: ["citrus"], base: ["cold", 180],
+    ing: [["cream", 2, "tbsp"], ["simple_syrup", 2, "tsp"], ["lemon_ext", 1, "drop"], ["ice", 1, "glass"]],
+    steps: ["Whisk the cream, syrup and lemon extract until frothy.", "Pour the cold brew over ice and float the cream on top."] },
+
+  /* Iced and cold */
+  { id: "iced_gingerbread", name: "Iced gingerbread latte", blurb: "Gingerbread syrup, espresso and cold milk over ice.", temp: "iced", strength: 2, milk: 2, sweet: 2, flavors: ["spiced"], base: ["esp", 60],
+    ing: [["syr_gingerbread", 1, "tbsp"], ["milk", 180, "ml", false, "cold"], ["ice", 1, "glass"]],
+    steps: ["Stir the syrup into the hot espresso.", "Fill a glass with ice and cold milk, then pour the espresso over."] },
+  { id: "iced_white_mocha", name: "Iced white mocha", blurb: "White chocolate, espresso and cold milk.", temp: "iced", strength: 2, milk: 2, sweet: 2, flavors: ["vanilla", "chocolate"], base: ["esp", 60],
+    ing: [["white_choc", 1, "tbsp"], ["milk", 180, "ml", false, "cold"], ["ice", 1, "glass"]],
+    steps: ["Whisk the white chocolate into the hot espresso.", "Fill a glass with ice and cold milk, then pour the espresso over."] },
+  { id: "iced_dirty_chai", name: "Iced dirty chai", blurb: "Cold chai latte with a shot of espresso.", temp: "iced", strength: 2, milk: 2, sweet: 1, flavors: ["spiced"], base: ["esp", 30],
+    ing: [["chai", 1, "piece", false, "1 tea bag, or 60 ml concentrate"], ["milk", 150, "ml", false, "cold"], ["honey", 1, "tsp", true], ["ice", 1, "glass"]],
+    steps: ["If using a tea bag, steep it in 60 ml hot water for 4 minutes, then remove.", "Stir honey into the chai, pour over ice and cold milk.", "Top with the espresso."] },
+  { id: "dirty_matcha", name: "Iced dirty matcha", blurb: "Layers of matcha milk and espresso. Grassy, nutty, energizing.", temp: "iced", strength: 2, milk: 2, sweet: 1, flavors: [], base: ["esp", 30],
+    ing: [["matcha", 1, "tsp"], ["milk", 180, "ml", false, "cold"], ["honey", 1, "tsp", true], ["ice", 1, "glass"]],
+    steps: ["Whisk the matcha with 2 tbsp warm water until smooth and frothy.", "Fill a glass with ice and milk, pour in the matcha, then slowly pour the espresso on top."] },
+  { id: "espresso_tonic", name: "Espresso tonic", blurb: "Espresso poured over tonic and ice. Bitter, bubbly and bright.", temp: "iced", strength: 2, milk: 0, sweet: 1, flavors: ["citrus"], base: ["esp", 60],
+    ing: [["tonic", 150, "ml", false, "cold"], ["orange", 1, "strip", true, "or lemon peel"], ["ice", 1, "glass"]],
+    steps: ["Fill a tall glass with ice and tonic.", "Pour the espresso slowly over the back of a spoon so it floats.", "Twist the peel over the top and drop it in."] },
+  { id: "espresso_soda", name: "Orange espresso soda", blurb: "Sparkling water, a little syrup, espresso and orange.", temp: "iced", strength: 2, milk: 0, sweet: 1, flavors: ["citrus"], base: ["esp", 60],
+    ing: [["sparkling", 150, "ml", false, "cold"], ["simple_syrup", 2, "tsp"], ["orange", 1, "strip"], ["ice", 1, "glass"]],
+    steps: ["Stir the syrup into the espresso and let it cool for a minute.", "Fill a glass with ice and sparkling water.", "Pour in the espresso and add the orange peel."] },
+  { id: "mazagran", name: "Mazagran", blurb: "Iced coffee with lemon and sugar, an old Portuguese and Algerian refresher.", temp: "iced", strength: 2, milk: 0, sweet: 1, flavors: ["citrus"], base: ["brewed", 180],
+    ing: [["lemon", 1, "strip", false, "plus a squeeze of juice"], ["sugar", 2, "tsp"], ["ice", 1, "glass"]],
+    steps: ["Stir the sugar into the hot coffee, then let it cool a few minutes.", "Pour over ice and add the lemon peel and a squeeze of juice."] },
+  { id: "dalgona", name: "Dalgona whipped coffee", blurb: "Whipped instant coffee spooned over iced milk.", temp: "iced", strength: 2, milk: 2, sweet: 2, flavors: ["caramel"], base: ["inst", 1],
+    ing: [["sugar", 1, "tbsp"], ["water", 15, "ml", false, "hot"], ["milk", 180, "ml", false, "cold"], ["ice", 1, "glass"]],
+    steps: ["Beat the instant coffee, sugar and hot water with a whisk or frother until thick, pale and holding peaks (2–4 minutes by hand).", "Fill a glass with ice and milk.", "Spoon the whipped coffee on top and stir before drinking."] },
+  { id: "frappe", name: "Greek frappé", blurb: "Instant coffee shaken to a thick foam and served over ice.", temp: "iced", strength: 2, milk: 1, sweet: 1, flavors: ["classic"], base: ["inst", 0.67],
+    ing: [["sugar", 2, "tsp", true], ["water", 200, "ml", false, "cold"], ["milk", 30, "ml", true], ["ice", 1, "glass"]],
+    steps: ["Shake the instant coffee, sugar and 2 tbsp cold water in a sealed jar for 30 seconds until foamy.", "Pour into a glass with ice and top up with the rest of the cold water.", "Add milk if you like and drink through a straw."] },
+  { id: "pistachio_cold", name: "Pistachio cream cold brew", blurb: "Cold brew under a float of pistachio sweet cream.", temp: "iced", strength: 2, milk: 1, sweet: 1, flavors: ["nutty"], base: ["cold", 180],
+    ing: [["cream", 2, "tbsp"], ["milk", 1, "tbsp"], ["syr_pistachio", 2, "tsp"], ["ice", 1, "glass"]],
+    steps: ["Whisk the cream, milk and pistachio syrup until frothy.", "Pour the cold brew over ice and float the cream on top."] },
+  { id: "salted_caramel_cold", name: "Salted caramel cream cold brew", blurb: "Cold brew topped with salty-sweet caramel cream.", temp: "iced", strength: 2, milk: 1, sweet: 2, flavors: ["caramel"], base: ["cold", 180],
+    ing: [["cream", 2, "tbsp"], ["syr_caramel", 2, "tsp"], ["salt", 1, "pinch"], ["ice", 1, "glass"]],
+    steps: ["Whisk the cream, caramel and salt until frothy.", "Pour the cold brew over ice and float the cream on top."] },
+  { id: "irish_cold", name: "Irish cream cold brew", blurb: "Cold brew with Irish cream syrup and a splash of cream.", temp: "iced", strength: 2, milk: 1, sweet: 1, flavors: ["vanilla", "chocolate"], base: ["cold", 180],
+    ing: [["syr_irish", 2, "tsp"], ["cream", 2, "tbsp"], ["ice", 1, "glass"]],
+    steps: ["Whisk the syrup and cream until frothy.", "Pour the cold brew over ice and top with the cream."] },
+  { id: "maple_oat_cold", name: "Maple oat cold brew", blurb: "Cold brew, oat milk and maple. Smooth and lightly sweet.", temp: "iced", strength: 2, milk: 1, sweet: 1, flavors: ["honey"], base: ["cold", 180],
+    ing: [["maple", 2, "tsp"], ["milk", 60, "ml", false, "oat is best"], ["ice", 1, "glass"]],
+    steps: ["Stir the maple syrup into the cold brew.", "Pour over ice and top with the milk."] },
+  { id: "honey_lavender_cold", name: "Honey lavender cold brew", blurb: "Floral, honeyed cold brew with a splash of milk.", temp: "iced", strength: 2, milk: 1, sweet: 1, flavors: ["floral", "honey"], base: ["cold", 180],
+    ing: [["syr_lavender", 1, "tsp"], ["honey", 1, "tsp"], ["milk", 60, "ml"], ["ice", 1, "glass"]],
+    steps: ["Stir the honey into 1 tbsp warm water so it dissolves, then add the lavender syrup.", "Pour the cold brew over ice, add the honey mix and top with milk."] },
+  { id: "raspberry_iced", name: "Iced raspberry latte", blurb: "Raspberry syrup, cold milk and espresso. Fruity and fun.", temp: "iced", strength: 2, milk: 2, sweet: 2, flavors: ["fruity"], base: ["esp", 60],
+    ing: [["syr_raspberry", 2, "tsp"], ["milk", 180, "ml", false, "cold"], ["ice", 1, "glass"]],
+    steps: ["Stir the syrup into the cold milk and pour over ice.", "Pour the espresso on top."] },
+  { id: "milkshake", name: "Coffee milkshake", blurb: "Ice cream, milk and coffee blended thick. Dessert first.", temp: "iced", strength: 2, milk: 2, sweet: 2, flavors: ["vanilla"], base: ["cold", 90],
+    ing: [["ice_cream", 2, "scoop"], ["milk", 90, "ml", false, "cold"], ["choc_sauce", 1, "tbsp", true]],
+    steps: ["Blend the cold coffee, ice cream and milk until smooth.", "Drizzle chocolate inside the glass if you like, then pour in the shake."] }
+];
+var SYRUP_FLAVOR = {
+  syr_vanilla: "vanilla", syr_caramel: "caramel", syr_toffee: "caramel", syr_hazelnut: "nutty", syr_pistachio: "nutty", syr_coconut: "nutty",
+  syr_pumpkin: "spiced", syr_gingerbread: "spiced", syr_peppermint: "mint", syr_lavender: "floral", syr_raspberry: "fruity", syr_irish: "vanilla", choc_sauce: "chocolate"
+};
+var R = {}, ALL = RECIPES;
+function customById(id) { return (profile.custom || []).filter(function (c) { return c.id === id; })[0]; }
+function customRecipes() {
+  var out = [];
+  (profile.custom || []).forEach(function (c) {
+    var fl = c.flavor && c.flavor !== "other" ? [c.flavor] : [];
+    if (c.kind === "extract") {
+      var nm = c.name.replace(/\s*extract$/i, "") || c.name;
+      out.push({ id: "cs_" + c.id, name: nm + " latte", blurb: "A latte flavored with your " + c.name + ".", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: fl, base: ["esp", 60], fromSyrup: true,
+        ing: [[c.id, 2, "drop"], ["sugar", 2, "tsp"], ["milk", 240, "ml"]],
+        steps: ["Stir the " + c.name + " and sugar into the hot espresso.", "Heat the milk to 60–65°C (140–150°F). " + FROTH, "Pour in the milk and top with foam."] });
+      out.push({ id: "ci_" + c.id, name: nm + " iced coffee", blurb: "Cold brew with a few drops of your " + c.name + ".", temp: "iced", strength: 2, milk: 1, sweet: 1, flavors: fl, base: ["cold", 180], fromSyrup: true,
+        ing: [[c.id, 2, "drop"], ["simple_syrup", 2, "tsp"], ["milk", 60, "ml"], ["ice", 1, "glass"]],
+        steps: ["Stir the " + c.name + " and syrup into the cold brew.", "Pour over ice and top with the milk."] });
+      return;
+    }
+    out.push({ id: "cs_" + c.id, name: c.name + " latte", blurb: "A latte made with your own " + c.name + ".", temp: "hot", strength: 2, milk: 2, sweet: 1, flavors: fl, base: ["esp", 60], fromSyrup: true,
+      ing: [[c.id, 1, "tbsp"], ["milk", 240, "ml"]],
+      steps: ["Stir the " + c.name + " into the espresso.", "Heat the milk to 60–65°C (140–150°F). " + FROTH, "Pour in the milk and top with foam."] });
+    out.push({ id: "ci_" + c.id, name: "Iced " + c.name + " latte", blurb: "Your " + c.name + " with espresso and cold milk over ice.", temp: "iced", strength: 2, milk: 2, sweet: 1, flavors: fl, base: ["esp", 60], fromSyrup: true,
+      ing: [[c.id, 1, "tbsp"], ["milk", 180, "ml", false, "cold"], ["ice", 1, "glass"]],
+      steps: ["Stir the " + c.name + " into the hot espresso.", "Fill a glass with ice and cold milk, then pour the espresso over."] });
+  });
+  return out;
+}
+function refreshR() {
+  ALL = RECIPES.concat(customRecipes(), profile.mine || []);
+  R = {}; ALL.forEach(function (r) { R[r.id] = r; });
+}
+
+var SURVEY = [
+  { key: "equipment", q: "What can you make coffee with?", hint: "Pick everything you have.", multi: true, min: 1,
+    opts: EQUIP.map(function (e) { return { v: e.id, t: e.label }; }) },
+  { key: "temp", q: "Hot or iced?", opts: [{ v: "hot", t: "Hot", s: "Warm mugs, always" }, { v: "iced", t: "Iced", s: "Cold, over ice" }, { v: "both", t: "Both", s: "Depends on the day" }] },
+  { key: "strength", q: "How strong do you like it?", opts: [{ v: 1, t: "Mild & smooth" }, { v: 2, t: "Balanced" }, { v: 3, t: "Bold & strong" }] },
+  { key: "milk", q: "How much milk?", opts: [{ v: 0, t: "None", s: "Black coffee" }, { v: 1, t: "A splash", s: "Cortado, flat white" }, { v: 2, t: "Lots", s: "Lattes and creamy drinks" }] },
+  { key: "sweet", q: "How sweet?", opts: [{ v: 0, t: "Not sweet" }, { v: 1, t: "A little sweet" }, { v: 2, t: "A sweet treat" }] },
+  { key: "flavors", q: "Which flavors do you love?", hint: "Pick as many as you like, or none.", multi: true, min: 0, two: true,
+    opts: FLAVORS.map(function (f) { return { v: f.id, t: f.label }; }) },
+  { key: "dairy", q: "Which milk do you prefer?", opts: [{ v: "dairy", t: "Dairy" }, { v: "plant", t: "Plant-based", s: "Oat, almond, soy" }, { v: "either", t: "No preference" }] }
+];
+
+/* ---------- State ---------- */
+function blankProfile() {
+  return { done: false, custom: [], mine: [], survey: { equipment: [], temp: null, strength: null, milk: null, sweet: null, flavors: [], dairy: null }, pantry: {}, units: "us", updatedAt: 0 };
+}
+var profile = blankProfile();
+try { var ls = JSON.parse(localStorage.getItem("daily-brew") || "null"); if (ls && ls.survey) profile = Object.assign(blankProfile(), ls); } catch (e) {}
+
+var ui = { view: profile.done ? "today" : "welcome", step: 0, recipe: null, mugs: 1, offset: 0, q: "", filter: "all", from: "today", confirmReset: false };
+var cloud = { ref: null, status: "device", timer: null };
+
+function persist() {
+  profile.updatedAt = Date.now();
+  try { localStorage.setItem("daily-brew", JSON.stringify(profile)); } catch (e) {}
+  if (cloud.ref) {
+    clearTimeout(cloud.timer);
+    cloud.timer = setTimeout(function () {
+      Promise.resolve(cloud.ref.set(JSON.parse(JSON.stringify(profile)))).catch(function () {});
+    }, 500);
+  }
+}
+
+/* ---------- Logic ---------- */
+function hasEquip(id) { return profile.survey.equipment.indexOf(id) >= 0; }
+function groupOrder(g) { return profile.survey.dairy === "plant" ? GROUPS[g].plant : GROUPS[g].dairy; }
+function has(id) {
+  if (id.indexOf("x:") === 0) return true;
+  if (STAPLES[id]) return true;
+  if (GROUPS[id]) return groupOrder(id).some(function (x) { return profile.pantry[x]; });
+  return !!profile.pantry[id];
+}
+function labelFor(id) {
+  if (id.indexOf("x:") === 0) return id.slice(2);
+  if (id.indexOf("c_") === 0) { var c = customById(id); return c ? c.name : "Removed syrup"; }
+  if (STAPLES[id]) return STAPLES[id];
+  if (GROUPS[id]) {
+    var pick = groupOrder(id).filter(function (x) { return profile.pantry[x]; })[0];
+    return pick ? ING[pick] : GROUPS[id].label;
+  }
+  return ING[id] || id;
+}
+function subsFor(id) {
+  var list = (SUBS[id] || []).slice(), fl = SYRUP_FLAVOR[id], mine = customById(id);
+  (profile.custom || []).forEach(function (c) {
+    if (c.id === id) return;
+    if ((fl && c.flavor === fl) || (id === "simple_syrup" && c.kind !== "extract") || (EXTRACT_FLAVOR[id] && c.kind === "extract" && c.flavor === EXTRACT_FLAVOR[id]))
+      list.unshift(c.kind === "extract"
+        ? { needs: [c.id, "sugar"], how: "¼ tsp of your " + esc(c.name) + " plus 2 tsp sugar." }
+        : { needs: [c.id], how: "Your " + esc(c.name) + ", same amount." + (id === "simple_syrup" ? " It adds its own flavor." : "") });
+  });
+  if (mine && mine.kind === "extract") {
+    Object.keys(EXTRACT_FLAVOR).forEach(function (k) { if (EXTRACT_FLAVOR[k] === mine.flavor) list.push({ needs: [k], how: ING[k] + ", same amount." }); });
+  } else if (mine) {
+    Object.keys(SYRUP_FLAVOR).forEach(function (k) { if (SYRUP_FLAVOR[k] === mine.flavor) list.push({ needs: [k], how: ING[k] + ", same amount." }); });
+    list.push({ needs: ["simple_syrup"], how: "Simple syrup, for sweetness without the flavor." });
+  }
+  return list.map(function (s) {
+    return { how: s.how, needs: s.needs, ok: s.needs.every(has), missing: s.needs.filter(function (n) { return !has(n); }) };
+  });
+}
+function ingStatus(id, opt) {
+  if (has(id)) return "have";
+  var subs = subsFor(id);
+  if (subs.some(function (s) { return s.ok; })) return "sub";
+  return opt ? "opt" : "missing";
+}
+function baseStatus(type) {
+  if (!type || !BASES[type]) return { kind: "none", method: null };
+  var b = BASES[type], pref = (profile.lastMethod || {})[type];
+  if (pref && hasEquip(pref) && b.direct.concat(b.alt).indexOf(pref) >= 0) return { kind: b.direct.indexOf(pref) >= 0 ? "have" : "sub", method: pref };
+  var d = b.direct.filter(hasEquip)[0];
+  if (d) return { kind: "have", method: d };
+  var a = b.alt.filter(hasEquip)[0];
+  if (a) return { kind: "sub", method: a };
+  return { kind: "missing", method: null };
+}
+function makeInfo(r) {
+  var subs = 0, missing = 0, b = baseStatus(r.base && r.base[0]);
+  if (b.kind === "sub") subs++; else if (b.kind === "missing") missing++;
+  r.ing.forEach(function (i) {
+    var s = ingStatus(i[0], i[3]);
+    if (s === "sub") subs++; else if (s === "missing") missing++;
+  });
+  return { subs: subs, missing: missing };
+}
+function statusPill(m) {
+  if (m.missing) return '<span class="pill bad">Missing ' + m.missing + "</span>";
+  if (m.subs) return '<span class="pill warn">' + m.subs + " swap" + (m.subs > 1 ? "s" : "") + "</span>";
+  return '<span class="pill good">Ready</span>';
+}
+
+var LEVEL = { strength: ["", "Mild", "Balanced", "Bold"], milk: ["Black", "Splash of milk", "Milky"], sweet: ["Not sweet", "Lightly sweet", "Sweet"] };
+
+function score(r) {
+  var s = profile.survey, sc = 0, why = [], month = new Date().getMonth();
+  if (r.temp !== "any") {
+    if (s.temp === "both") {
+      if ((month >= 10 || month <= 2) && r.temp === "hot") { sc += 1.5; why.push("A warm one for a cold month"); }
+      if (month >= 5 && month <= 7 && r.temp === "iced") { sc += 1.5; why.push("Iced, for a warm month"); }
+    } else if (r.temp === s.temp) { sc += 3; why.push(r.temp === "hot" ? "Hot, the way you like it" : "Iced, the way you like it"); }
+    else sc -= 5;
+  }
+  var dm = Math.abs(r.milk - s.milk); sc += [3, 0, -4][dm]; if (!dm) why.push(LEVEL.milk[r.milk] + ", as you asked");
+  var ds = Math.abs(r.sweet - s.sweet); sc += [3, 0, -3][ds]; if (!ds) why.push(LEVEL.sweet[r.sweet] + ", matching your taste");
+  var dt = Math.abs(r.strength - s.strength); sc += [2, 0, -2][dt];
+  var fm = r.flavors.filter(function (f) { return s.flavors.indexOf(f) >= 0 && f !== "classic"; });
+  sc += fm.length * 2.5; if (fm.length) why.unshift("Has " + fm.map(function (f) { return FL[f].toLowerCase(); }).join(" and "));
+  if (s.flavors.indexOf("classic") >= 0 && (r.flavors.length === 0 || r.flavors.indexOf("classic") >= 0)) { sc += 2; }
+  var m = makeInfo(r);
+  sc -= m.subs * 1.2;
+  if (!m.subs && !m.missing) why.push("Uses only what you have");
+  return { r: r, score: sc, why: why.slice(0, 3), make: m };
+}
+function ranked() {
+  return ALL.map(score).sort(function (a, b) { return b.score - a.score; });
+}
+function dateKey(d) { return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+function hash(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return Math.abs(h); }
+function todaysOrder() {
+  var all = ranked(), makeable = all.filter(function (x) { return !x.make.missing; });
+  if (!makeable.length) return { list: [], all: all };
+  var pool = makeable.slice(0, Math.min(6, makeable.length));
+  var now = new Date(), y = new Date(now); y.setDate(now.getDate() - 1);
+  var i = hash(dateKey(now)) % pool.length, yi = hash(dateKey(y)) % pool.length;
+  if (pool.length > 1 && i === yi) i = (i + 1) % pool.length;
+  var pick = pool[i];
+  return { list: [pick].concat(makeable.filter(function (x) { return x !== pick; })), all: all };
+}
+
+/* ---------- Formatting ---------- */
+function frac(n) {
+  var q = Math.round(n * 4) / 4, whole = Math.floor(q), part = q - whole;
+  if (q === 0) return "⅛";
+  var map = { 0: "", 0.25: "¼", 0.5: "½", 0.75: "¾" };
+  return (whole ? whole : "") + map[part];
+}
+function amt(q, u) {
+  if (u === "ml") {
+    if (profile.units === "metric") return Math.round(q / 5) * 5 + " ml";
+    if (q <= 22) return frac(q / 15) + " tbsp";
+    if (q < 180) return (Math.round(q / 29.57 * 2) / 2) + " fl oz";
+    var c = q / 240; return frac(c) + " cup" + (c > 1.1 ? "s" : "");
+  }
+  if (u === "tsp") return q >= 3 ? frac(q / 3) + " tbsp" : frac(q) + " tsp";
+  if (u === "tbsp") return frac(q) + " tbsp";
+  if (u === "pinch") return q === 1 ? "a pinch" : q + " pinches";
+  if (u === "scoop") return q + " scoop" + (q > 1 ? "s" : "");
+  if (u === "strip") return q + " strip" + (q > 1 ? "s" : "");
+  if (u === "glass") return q === 1 ? "1 glass" : q + " glasses";
+  if (u === "piece") return frac(q);
+  if (u === "drop") { var dr = Math.round(q); return dr + " drop" + (dr === 1 ? "" : "s"); }
+  if (u === "g") return Math.round(q) + " g";
+  return q + " " + u;
+}
+function baseStep(type, method, ml) {
+  var A = amt(ml, "ml"), sh = EQ[method] ? EQ[method].short : "";
+  if (type === "esp") {
+    if (method === "espresso") { var d = Math.max(1, Math.round(ml / 60)); return "Pull " + d + " double shot" + (d > 1 ? "s" : "") + " of espresso (about " + A + ")."; }
+    if (method === "pod_esp") { var p = Math.max(1, Math.round(ml / 40)); return "Brew " + p + " espresso pod" + (p > 1 ? "s" : "") + " on the espresso (short) setting, about " + A + " in total."; }
+    if (method === "pod_brew") return "Your pod brewer can't make true espresso, so brew a pod on its smallest, strongest setting and use " + amt(ml * 1.5, "ml") + ".";
+    if (method === "moka") return "Brew strong coffee in your moka pot and measure out " + A + ".";
+    if (method === "aeropress") return "Make a strong AeroPress concentrate: 18 g fine-ground coffee and 80 ml hot water, stir, steep 1 minute, press. Use " + A + ".";
+    if (method === "instant") return "Stir " + frac(ml / 30) + " tsp instant coffee into " + A + " of hot water.";
+    return "No espresso maker, so brew extra-strong coffee in your " + sh + " (double your usual grounds) and use " + amt(ml * 1.5, "ml") + ".";
+  }
+  if (type === "inst") return "Measure out " + amt(ml, "tbsp") + " of instant coffee.";
+  if (type === "brewed") {
+    if (method === "aeropress") return "Brew with your AeroPress, then top up with hot water to " + A + ".";
+    if (method === "instant") return "Stir " + frac(ml / 120) + " tsp instant coffee into " + A + " of hot water.";
+    if (method === "espresso") { var d2 = Math.max(1, Math.round(ml / 150)); return "Make an Americano: pull " + d2 + " double shot" + (d2 > 1 ? "s" : "") + " and top up with hot water to " + A + "."; }
+    if (method === "moka") return "Brew moka-pot coffee and top up with hot water to " + A + ".";
+    if (method === "pod_brew") return "Brew " + A + " with a pod on your pod brewer. Use the strong or bold setting if it has one.";
+    if (method === "pod_esp") return "Brew a lungo pod (or two espresso pods) and top up with hot water to " + A + ".";
+    return "Brew " + A + " of coffee in your " + sh + ", using about " + Math.round(ml / 16) + " g of ground coffee.";
+  }
+  if (type === "cold") {
+    if (method === "coldbrewer") return "Use " + A + " of cold brew from your cold brew maker. Dilute it first if your maker makes concentrate.";
+    if (method === "pod_brew") return "No cold brew? Brew a pod on the smallest setting straight over a full glass of ice, then top up with cold water to " + A + ".";
+    if (method === "pod_esp") return "No cold brew? Brew 2 espresso pods and add the same amount of cold water, about " + A + " in total.";
+    if (method === "jar" || method === "press") return "Use " + A + " of cold brew. To make it, steep 100 g coarse coffee in 500 ml cold water in your " + sh + " for 12–18 hours in the fridge, then strain. It keeps for a week.";
+    if (method === "instant") return "Dissolve " + frac(ml / 60) + " tsp instant coffee in a splash of hot water, then add cold water to " + A + ".";
+    if (method === "espresso" || method === "moka" || method === "aeropress") return "No cold brew? Use " + amt(ml / 2, "ml") + " of fresh strong coffee from your " + sh + " and add the same amount of cold water.";
+    return "No cold brew? Brew " + A + " of double-strength coffee in your " + sh + " and let it cool a few minutes before it hits the ice.";
+  }
+  return "";
+}
+function frothText() {
+  return hasEquip("frother") ? "Froth it with your milk frother." : "No frother? Shake the hot milk hard in a sealed jar for 30 seconds.";
+}
+function chips(r) {
+  var t = r.temp === "any" ? "Hot or iced" : r.temp === "hot" ? "Hot" : "Iced";
+  return '<div class="chips"><span class="chip">' + t + '</span><span class="chip">' + LEVEL.strength[r.strength] + '</span><span class="chip">' + LEVEL.milk[r.milk] + '</span><span class="chip">' + LEVEL.sweet[r.sweet] + "</span></div>";
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+/* ---------- Views ---------- */
+var app = document.getElementById("app"), nav = document.getElementById("nav");
+
+function render() {
+  var v = ui.view;
+  nav.hidden = v === "welcome" || v === "survey" || v === "setup" || (v === "restore" && !profile.done);
+  Array.prototype.forEach.call(nav.querySelectorAll("button"), function (b) {
+    var cur = b.dataset.go === v || (v === "recipe" && b.dataset.go === ui.from) || (v === "edit" && b.dataset.go === "mine") || (v === "restore" && b.dataset.go === "profile");
+    if (cur) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
+  refreshR();
+  var html = { welcome: vWelcome, survey: vSurvey, setup: vPantry, pantry: vPantry, today: vToday, library: vLibrary, recipe: vRecipe, profile: vProfile, mine: vMine, edit: vEditor, restore: vRestore }[v]();
+  app.innerHTML = html;
+  if (ui.view === "library") renderLibList();
+  window.scrollTo(0, 0);
+}
+
+function vWelcome() {
+  return '<section class="screen onboard" style="align-content:center;min-height:100vh">' +
+    '<p class="eyebrow">Daily Brew</p>' +
+    "<h1>A coffee recipe for every day, made from what's in your kitchen.</h1>" +
+    '<p class="muted">Answer seven quick questions about how you like your coffee, tick off what you have, and you\'ll get a new recipe each morning, with swaps for anything you\'re missing.</p>' +
+    '<button class="btn primary block" data-act="start">Start the taste quiz</button>' +
+    '<button class="btn ghost block" data-act="openrestore">I have a backup to restore</button>' +
+    "</section>";
+}
+
+function vSurvey() {
+  var q = SURVEY[ui.step], val = profile.survey[q.key];
+  var sel = function (v) { return q.multi ? val.indexOf(v) >= 0 : val === v; };
+  var ok = q.multi ? val.length >= q.min : val !== null && val !== undefined;
+  var opts = q.opts.map(function (o) {
+    return '<button type="button" class="opt" data-act="answer" data-v="' + o.v + '" aria-pressed="' + sel(o.v) + '"><span class="t">' + o.t + "</span>" + (o.s ? '<span class="s">' + o.s + "</span>" : "") + "</button>";
+  }).join("");
+  return '<section class="screen onboard">' +
+    '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="' + SURVEY.length + '" aria-valuenow="' + (ui.step + 1) + '"><span style="width:' + ((ui.step + 1) / SURVEY.length * 100) + '%"></span></div>' +
+    '<p class="eyebrow">Question ' + (ui.step + 1) + " of " + SURVEY.length + "</p>" +
+    "<h1>" + q.q + "</h1>" + (q.hint ? '<p class="muted">' + q.hint + "</p>" : "") +
+    '<div class="opts' + (q.two ? " two" : "") + '">' + opts + "</div>" +
+    '<div class="btns"><button class="btn" data-act="sback">' + (ui.step ? "Back" : "Cancel") + '</button><button class="btn primary" data-act="snext"' + (ok ? "" : " disabled") + ">" + (ui.step === SURVEY.length - 1 ? "Next: your pantry" : "Next") + "</button></div>" +
+    "</section>";
+}
+
+function vPantry() {
+  var setup = ui.view === "setup";
+  var count = Object.keys(profile.pantry).filter(function (k) { return profile.pantry[k]; }).length;
+  var gear = '<div class="pantry-sec"><h3>Coffee gear</h3><div class="toggles">' + EQUIP.map(function (e) {
+    return '<button type="button" class="tog" data-act="equip" data-id="' + e.id + '" aria-pressed="' + hasEquip(e.id) + '">' + e.label + "</button>";
+  }).join("") + "</div></div>";
+  var secs = PANTRY.map(function (s) {
+    return '<div class="pantry-sec"><h3>' + s.title + '</h3><div class="toggles">' + s.items.map(function (i) {
+      return '<button type="button" class="tog" data-act="pantry" data-id="' + i[0] + '" aria-pressed="' + !!profile.pantry[i[0]] + '">' + i[1] + "</button>";
+    }).join("") + "</div></div>";
+  }).join("");
+  return '<section class="screen' + (setup ? " onboard" : "") + '">' +
+    (setup ? '<p class="eyebrow">Last step</p>' : '<p class="eyebrow">Pantry</p>') +
+    "<h1>What's in your kitchen?</h1>" +
+    '<p class="muted">Tap everything you have. Recipes use these first and suggest swaps for the rest. Salt, ice and water are assumed.</p>' +
+    '<div class="card">' + gear + "</div>" +
+    '<div class="card" style="gap:18px">' + secs + "</div>" + customCard() +
+    (setup ? '<button class="btn primary block" data-act="finish">See today\'s coffee</button>' : '<p class="save-note">' + count + " items in your pantry · " + saveNote() + "</p>") +
+    "</section>";
+}
+
+function customCard() {
+  var list = (profile.custom || []).map(function (c) {
+    return '<div class="cs-row"><button type="button" class="tog" data-act="pantry" data-id="' + c.id + '" aria-pressed="' + !!profile.pantry[c.id] + '">' + esc(c.name) + '</button><span class="muted small">' + (c.kind === "extract" ? "Extract · " : "Syrup · ") + (FL[c.flavor] || "Other flavor") +
+      '</span><button type="button" class="icon-btn" data-act="csdel" data-id="' + c.id + '" aria-label="Remove ' + esc(c.name) + '">✕</button></div>';
+  }).join("");
+  return '<div class="card"><h3>Your own syrups & extracts</h3><p class="muted small">Add anything that isn\'t listed. Pick the flavor it\'s closest to, and the app will use it as a swap and build drinks around it.</p>' +
+    (list ? '<div class="list">' + list + "</div>" : "") +
+    '<div class="row"><span class="label">Type</span><div class="seg" role="group" aria-label="Type"><button type="button" data-act="cskind" data-v="syrup" aria-pressed="' + (ui.csKind !== "extract") + '">Syrup or sauce</button><button type="button" data-act="cskind" data-v="extract" aria-pressed="' + (ui.csKind === "extract") + '">Extract</button></div></div>' +
+    '<div class="field"><label for="cs-name">Name</label><input class="field-in" id="cs-name" maxlength="40" placeholder="' + (ui.csKind === "extract" ? "e.g. Cherry extract" : "e.g. Brown butter syrup") + '"></div>' +
+    '<div class="field"><label for="cs-flavor">Tastes most like</label><select class="field-in" id="cs-flavor">' +
+    FLAVORS.filter(function (f) { return f.id !== "classic"; }).map(function (f) { return '<option value="' + f.id + '">' + f.label + "</option>"; }).join("") + '<option value="other">Something else</option></select></div>' +
+    '<button type="button" class="btn" data-act="csadd">' + (ui.csKind === "extract" ? "Add extract" : "Add syrup") + '</button>' + (ui.csErr ? '<p class="err" role="alert">' + ui.csErr + "</p>" : "") + "</div>";
+}
+
+function vToday() {
+  var o = todaysOrder(), now = new Date();
+  var dateStr = now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  if (!o.list.length) {
+    var best = o.all[0];
+    return '<section class="screen"><p class="eyebrow">' + dateStr + "</p><h1>Today's coffee</h1>" +
+      '<div class="card"><h2>Add a few things to your pantry</h2><p class="muted">Nothing can be made with what you have yet. The closest match is <strong>' + esc(best.r.name) + "</strong>.</p>" +
+      '<div class="btns"><button class="btn primary" data-act="go" data-v="pantry">Open pantry</button><button class="btn" data-act="open" data-id="' + best.r.id + '">See recipe</button></div></div></section>';
+  }
+  var idx = ui.offset % o.list.length, pick = o.list[idx], r = pick.r;
+  var more = o.list.filter(function (x, i) { return i !== idx; }).slice(0, 3).map(itemHtml).join("");
+  return '<section class="screen">' +
+    '<p class="eyebrow">' + dateStr + "</p><h1>" + (idx === 0 ? "Today's coffee" : "Another idea for today") + "</h1>" +
+    '<p class="muted small">Your gear: ' + (profile.survey.equipment.map(function (e) { return EQ[e] ? EQ[e].label : e; }).join(", ") || "none yet") + ' · <button class="link" data-act="go" data-v="pantry">Change</button></p>' +
+    '<div class="card hero"><div class="row"><h2>' + esc(r.name) + "</h2>" + statusPill(pick.make) + "</div>" +
+    "<p>" + esc(r.blurb) + "</p>" + chips(r) +
+    (pick.why.length ? '<ul class="why">' + pick.why.map(function (w) { return "<li>" + w + "</li>"; }).join("") + "</ul>" : "") +
+    '<div class="btns"><button class="btn primary" data-act="open" data-id="' + r.id + '">Make it</button><button class="btn" data-act="another">Show another</button></div></div>' +
+    "<h2>Also good today</h2><div class=\"list\">" + more + "</div>" +
+    '<p class="save-note">A new pick every morning, based on your taste and pantry.</p>' +
+    "</section>";
+}
+
+function itemHtml(x) {
+  var r = x.r;
+  return '<button type="button" class="item" data-act="open" data-id="' + r.id + '"><span class="t">' + esc(r.name) + (r.mine ? ' <span class="chip">Mine</span>' : "") + "</span>" + statusPill(x.make) +
+    '<span class="m">' + (r.temp === "any" ? "Hot or iced" : r.temp === "hot" ? "Hot" : "Iced") + " · " + LEVEL.milk[r.milk] + " · " + LEVEL.sweet[r.sweet] + "</span></button>";
+}
+
+var FILTERS = [["all", "All"], ["ready", "Can make now"], ["match", "Best for me"], ["hot", "Hot"], ["iced", "Iced"], ["mine", "Mine"]];
+function vLibrary() {
+  return '<section class="screen"><p class="eyebrow">Recipes</p><h1>All ' + ALL.length + " coffees</h1>" +
+    '<label for="search" class="muted small">Search by name or flavor</label>' +
+    '<input id="search" class="search" type="search" placeholder="Try mocha, vanilla or iced" value="' + esc(ui.q) + '" autocomplete="off">' +
+    '<div class="filters" role="group" aria-label="Filter">' + FILTERS.map(function (f) {
+      return '<button type="button" class="tog" data-act="filter" data-v="' + f[0] + '" aria-pressed="' + (ui.filter === f[0]) + '">' + f[1] + "</button>";
+    }).join("") + "</div>" +
+    '<div class="list" id="lib-list"></div></section>';
+}
+function renderLibList() {
+  var q = ui.q.trim().toLowerCase();
+  var list = ui.filter === "match" ? ranked() : ALL.map(score);
+  list = list.filter(function (x) {
+    var r = x.r;
+    if (ui.filter === "ready" && (x.make.missing || x.make.subs)) return false;
+    if (ui.filter === "mine" && !r.mine && !r.fromSyrup) return false;
+    if (ui.filter === "hot" && r.temp === "iced") return false;
+    if (ui.filter === "iced" && r.temp === "hot") return false;
+    if (!q) return true;
+    var hay = (r.name + " " + r.blurb + " " + r.flavors.map(function (f) { return FL[f]; }).join(" ") + " " + r.temp).toLowerCase();
+    return hay.indexOf(q) >= 0;
+  });
+  var el = document.getElementById("lib-list");
+  el.innerHTML = list.length ? list.map(itemHtml).join("") : '<p class="muted">No coffees match that. Try a different word or filter.</p>';
+}
+
+function vRecipe() {
+  var r = R[ui.recipe];
+  if (!r) { ui.view = "library"; return vLibrary(); }
+  var m = ui.mugs, type = r.base && r.base[0], b = baseStatus(type), B0 = BASES[type];
+  var owned = B0 ? B0.direct.concat(B0.alt).filter(hasEquip) : [];
+  var picker = !B0 ? "" : owned.length > 1
+    ? '<div class="pantry-sec"><span class="label muted small" id="mlabel">Brewing with</span><div class="toggles" role="group" aria-labelledby="mlabel">' +
+      owned.map(function (o) { return '<button type="button" class="tog" data-act="method" data-v="' + o + '" aria-pressed="' + (o === b.method) + '">' + EQ[o].label + "</button>"; }).join("") + "</div></div>"
+    : owned.length ? '<p class="muted small">Brewing with your ' + EQ[owned[0]].short + '. <button class="link" data-act="go" data-v="pantry">Change gear</button></p>'
+    : '<p class="muted small">You haven\'t added any coffee gear. <button class="link" data-act="go" data-v="pantry">Add your machine</button></p>';
+  var icons = { have: "✓", sub: "⇄", missing: "!", opt: "–" };
+  var rows = "", baseQty = "";
+  if (B0) {
+    baseQty = amt(r.base[1] * m, B0.unit || "ml");
+    var baseNote = b.kind === "have" ? "With your " + EQ[b.method].short : b.kind === "sub" ? "Swap: use your " + EQ[b.method].short : "You need a way to make this";
+    rows += '<li class="ing"><span class="ic ' + b.kind + '">' + icons[b.kind] + '</span><span><span class="name">' + B0.label + '</span><br><span class="note">' + baseNote + '</span> <button class="link" data-act="basesubs">Options</button></span><span class="qty">' + baseQty + "</span></li>";
+  }
+  rows += r.ing.map(function (i) {
+    var st = ingStatus(i[0], i[3]), nsubs = subsFor(i[0]).length;
+    var note = [];
+    if (i[3]) note.push("optional");
+    if (i[4]) note.push(esc(i[4]));
+    if (st === "sub") note.push("swap available");
+    if (st === "missing") note.push("you don't have this");
+    var tap = !nsubs ? "" : ' <button class="link" data-act="subs" data-id="' + esc(i[0]) + '">' + (st === "sub" ? "See swap" : st === "have" ? "Swaps" : "Options") + "</button>";
+    return '<li class="ing"><span class="ic ' + st + '">' + icons[st] + '</span><span><span class="name">' + esc(labelFor(i[0])) + "</span>" + (note.length ? '<br><span class="note">' + note.join(" · ") + "</span>" : "") + tap + '</span><span class="qty">' + amt(i[1] * m, i[2]) + "</span></li>";
+  }).join("");
+  var steps = [];
+  if (B0) steps.push(b.method ? baseStep(type, b.method, r.base[1] * m) : "Make " + baseQty + " of " + B0.label.toLowerCase() + ".");
+  r.steps.forEach(function (st) { steps.push(esc(st).replace(FROTH, frothText())); });
+  var stepHtml = steps.map(function (st, i) {
+    return '<li><label for="st-' + i + '"><input type="checkbox" id="st-' + i + '"><span>' + st + "</span></label></li>";
+  }).join("");
+  var actions = r.mine
+    ? (ui.confirmDel
+      ? '<div class="card"><p>Delete <strong>' + esc(r.name) + '</strong>? This can\'t be undone.</p><div class="btns"><button class="btn" data-act="delno">Keep it</button><button class="btn primary" data-act="delyes">Delete</button></div></div>'
+      : '<div class="btns"><button class="btn" data-act="editrec">Edit recipe</button><button class="btn ghost" data-act="delrec">Delete</button></div>')
+    : r.fromSyrup ? '<p class="muted small">Made from one of your own syrups or extracts. Manage them in Pantry.</p>'
+    : '<button class="btn block" data-act="customize">Make my own version</button>';
+  return '<section class="screen"><button class="back" data-act="back">‹ Back</button>' +
+    (r.mine ? '<p class="eyebrow">My recipe</p>' : "") +
+    "<h1>" + esc(r.name) + "</h1><p class=\"muted\">" + esc(r.blurb) + "</p>" + chips(r) +
+    '<div class="card"><div class="row"><h2>Ingredients</h2><div class="stepper"><button type="button" data-act="mugs" data-v="-1" aria-label="One fewer mug">−</button><output aria-live="polite">' + m + " mug" + (m > 1 ? "s" : "") + '</output><button type="button" data-act="mugs" data-v="1" aria-label="One more mug">+</button></div></div>' +
+    picker + '<ul class="ings">' + rows + "</ul></div>" +
+    '<div class="card"><h2>Steps</h2><ol class="steps">' + stepHtml + "</ol></div>" +
+    actions + "</section>";
+}
+
+/* ---------- My recipes ---------- */
+function vMine() {
+  var mine = (profile.mine || []).map(score);
+  var fromSyr = customRecipes().map(score);
+  return '<section class="screen"><p class="eyebrow">My recipes</p><h1>Your own coffees</h1>' +
+    '<p class="muted">Write down drinks you make, or open any recipe and tap "Make my own version" to tweak it. Your recipes show up in the daily picks too.</p>' +
+    '<button class="btn primary block" data-act="newrec">New recipe</button>' +
+    (mine.length ? '<div class="list">' + mine.map(itemHtml).join("") + "</div>"
+      : '<div class="card"><h3>No recipes yet</h3><p class="muted small">Tap New recipe to add your first one.</p></div>') +
+    (fromSyr.length ? '<h2>From your syrups & extracts</h2><p class="muted small">Made automatically from what you added in Pantry.</p><div class="list">' + fromSyr.map(itemHtml).join("") + "</div>" : "") +
+    "</section>";
+}
+
+var UNITS = [["ml", "ml"], ["fl oz", "fl oz"], ["cup", "cup"], ["tsp", "tsp"], ["tbsp", "tbsp"], ["pinch", "pinch"], ["piece", "piece"], ["drop", "drop"], ["scoop", "scoop"], ["strip", "strip"], ["glass", "glass"], ["g", "g"]];
+function baseUnitLabel(t) { return t === "esp" ? "shots" : t === "inst" ? "tsp" : profile.units === "us" ? "cups" : "ml"; }
+function baseToInput(t, a) { return t === "esp" ? +(a / 30).toFixed(2) : t === "inst" ? +(a * 3).toFixed(2) : profile.units === "us" ? +(a / 240).toFixed(2) : a; }
+function baseFromInput(t, v) { return t === "esp" ? v * 30 : t === "inst" ? v / 3 : profile.units === "us" ? v * 240 : v; }
+function blankDraft() {
+  var us = profile.units === "us";
+  return { id: null, name: "", blurb: "", temp: profile.survey.temp === "iced" ? "iced" : "hot", strength: profile.survey.strength || 2, milk: profile.survey.milk === null ? 2 : profile.survey.milk,
+    sweet: profile.survey.sweet === null ? 1 : profile.survey.sweet, flavors: [], baseType: "esp", baseAmt: 2,
+    ing: [{ id: "milk", text: "", q: us ? 1 : 240, u: us ? "cup" : "ml", opt: false, note: "" }], steps: "" };
+}
+function draftFrom(r, keepId) {
+  var t = r.base ? r.base[0] : "none";
+  return { id: keepId ? r.id : null, name: keepId ? r.name : "My " + r.name.charAt(0).toLowerCase() + r.name.slice(1), blurb: r.blurb, temp: r.temp, strength: r.strength, milk: r.milk, sweet: r.sweet,
+    flavors: r.flavors.slice(), baseType: t, baseAmt: r.base ? baseToInput(t, r.base[1]) : "",
+    ing: r.ing.map(function (i) { var x = i[0].indexOf("x:") === 0; return { id: x ? "x:" : i[0], text: x ? i[0].slice(2) : "", q: i[1], u: i[2], opt: !!i[3], note: i[4] || "" }; }),
+    steps: r.steps.map(function (st) { return st.replace(FROTH, frothText()); }).join("\n") };
+}
+function ingOptions(sel) {
+  var o = function (v, t) { return '<option value="' + esc(v) + '"' + (v === sel ? " selected" : "") + ">" + esc(t) + "</option>"; };
+  var h = o("", "Choose an ingredient") + '<optgroup label="Basics">' + o("milk", "Milk (whichever you have)") + o("cream", "Cream or half-and-half") + o("water", "Water") + o("ice", "Ice") + o("salt", "Salt") + "</optgroup>";
+  if ((profile.custom || []).length) h += '<optgroup label="Your syrups">' + profile.custom.map(function (c) { return o(c.id, c.name); }).join("") + "</optgroup>";
+  h += PANTRY.map(function (sec) { return '<optgroup label="' + sec.title + '">' + sec.items.map(function (i) { return o(i[0], i[1]); }).join("") + "</optgroup>"; }).join("");
+  return h + '<optgroup label="Other">' + o("x:", "Something else (type it)") + "</optgroup>";
+}
+function seg(k, opts, cur) {
+  return '<div class="seg" role="group">' + opts.map(function (op) {
+    return '<button type="button" data-act="df" data-k="' + k + '" data-v="' + op[0] + '" aria-pressed="' + (String(op[0]) === String(cur)) + '">' + op[1] + "</button>";
+  }).join("") + "</div>";
+}
+function vEditor() {
+  var d = ui.draft;
+  var ingRows = d.ing.map(function (g, i) {
+    return '<div class="ed-ing">' +
+      '<label class="sr" for="ing-' + i + '">Ingredient ' + (i + 1) + '</label><select id="ing-' + i + '" class="field-in" data-f="ing.' + i + '.id">' + ingOptions(g.id) + "</select>" +
+      (g.id === "x:" ? '<input class="field-in" id="ingt-' + i + '" data-f="ing.' + i + '.text" placeholder="What is it?" value="' + esc(g.text) + '" maxlength="40" aria-label="Ingredient name">' : "") +
+      '<div class="ed-row"><input class="field-in" type="number" inputmode="decimal" min="0" step="any" id="ingq-' + i + '" data-f="ing.' + i + '.q" value="' + esc(g.q) + '" aria-label="Amount">' +
+      '<select class="field-in" id="ingu-' + i + '" data-f="ing.' + i + '.u" aria-label="Unit">' + UNITS.map(function (u) { return '<option value="' + u[0] + '"' + (u[0] === g.u ? " selected" : "") + ">" + u[1] + "</option>"; }).join("") + "</select>" +
+      '<label class="chk"><input type="checkbox" id="ingo-' + i + '" data-f="ing.' + i + '.opt"' + (g.opt ? " checked" : "") + "> Optional</label>" +
+      '<button type="button" class="icon-btn" data-act="ingdel" data-i="' + i + '" aria-label="Remove ingredient ' + (i + 1) + '">✕</button></div></div>';
+  }).join("");
+  return '<section class="screen"><button class="back" data-act="cancelrec">‹ Cancel</button>' +
+    '<p class="eyebrow">' + (d.id ? "Edit recipe" : "New recipe") + "</p><h1>" + (d.id ? "Edit your recipe" : "Add your own coffee") + "</h1>" +
+    '<div class="card"><div class="field"><label for="f-name">Name</label><input class="field-in" id="f-name" data-f="name" value="' + esc(d.name) + '" maxlength="50" placeholder="e.g. Grandma\'s Sunday latte"></div>' +
+    '<div class="field"><label for="f-blurb">Short description</label><textarea class="field-in" id="f-blurb" data-f="blurb" rows="2" maxlength="160" placeholder="What makes it good?">' + esc(d.blurb) + "</textarea></div>" +
+    '<div class="row"><span class="label">Served</span>' + seg("temp", [["hot", "Hot"], ["iced", "Iced"], ["any", "Either"]], d.temp) + "</div></div>" +
+    '<div class="card"><h2>Coffee</h2><div class="field"><label for="f-base">Coffee base</label><select class="field-in" id="f-base" data-f="baseType">' +
+    [["esp", "Espresso"], ["brewed", "Brewed coffee"], ["cold", "Cold brew"], ["inst", "Instant coffee"], ["none", "No coffee base"]].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === d.baseType ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></div>" +
+    (d.baseType !== "none" ? '<div class="field"><label for="f-bamt">How much per mug (' + baseUnitLabel(d.baseType) + ')</label><input class="field-in" type="number" inputmode="decimal" min="0" step="any" id="f-bamt" data-f="baseAmt" value="' + esc(d.baseAmt) + '"></div>' +
+      '<p class="muted small">The app writes the brewing step for whichever machine you pick.</p>' : "") + "</div>" +
+    '<div class="card"><h2>Ingredients</h2><p class="muted small">Amounts are per mug. Pick from your pantry list so the app can track what you have and suggest swaps.</p>' + ingRows +
+    '<button type="button" class="btn" data-act="ingadd">+ Add ingredient</button></div>' +
+    '<div class="card"><h2>Steps</h2><div class="field"><label for="f-steps">One step per line</label><textarea class="field-in" id="f-steps" data-f="steps" rows="5" placeholder="Stir the syrup into the espresso.&#10;Heat and froth the milk.&#10;Pour and enjoy.">' + esc(d.steps) + "</textarea></div></div>" +
+    '<div class="card"><h2>Taste</h2><p class="muted small">Used to match it to your daily picks.</p>' +
+    '<div class="row"><span class="label">Strength</span>' + seg("strength", [[1, "Mild"], [2, "Balanced"], [3, "Bold"]], d.strength) + "</div>" +
+    '<div class="row"><span class="label">Milk</span>' + seg("milk", [[0, "None"], [1, "Splash"], [2, "Lots"]], d.milk) + "</div>" +
+    '<div class="row"><span class="label">Sweetness</span>' + seg("sweet", [[0, "None"], [1, "A little"], [2, "Sweet"]], d.sweet) + "</div>" +
+    '<div class="pantry-sec"><span class="label">Flavors</span><div class="toggles">' + FLAVORS.map(function (f) {
+      return '<button type="button" class="tog" data-act="dflav" data-v="' + f.id + '" aria-pressed="' + (d.flavors.indexOf(f.id) >= 0) + '">' + f.label + "</button>";
+    }).join("") + "</div></div></div>" +
+    (ui.draftErr ? '<p class="err" role="alert">' + ui.draftErr + "</p>" : "") +
+    '<div class="btns"><button class="btn" data-act="cancelrec">Cancel</button><button class="btn primary" data-act="saverec">Save recipe</button></div>' +
+    "</section>";
+}
+function saveDraft() {
+  var d = ui.draft, name = d.name.trim(), lines = d.steps.split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
+  var ing = d.ing.filter(function (g) { return g.id && (g.id !== "x:" || g.text.trim()); }).map(function (g) {
+    var q = parseFloat(g.q); if (!(q > 0)) q = 1;
+    var u = g.u; if (u === "fl oz") { q = q * 29.57; u = "ml"; } else if (u === "cup") { q = q * 240; u = "ml"; }
+    var row = [g.id === "x:" ? "x:" + g.text.trim().slice(0, 40) : g.id, q, u, !!g.opt];
+    if (g.note) row.push(g.note);
+    return row;
+  });
+  var hasBase = d.baseType !== "none";
+  if (!name) return "Give your recipe a name.";
+  if (!ing.length && !hasBase) return "Add a coffee base or at least one ingredient.";
+  if (!lines.length) return "Add at least one step.";
+  var ba = parseFloat(d.baseAmt); if (hasBase && !(ba > 0)) return "Enter how much coffee goes in each mug.";
+  var r = { id: d.id || "m_" + Date.now().toString(36), mine: true, name: name.slice(0, 50), blurb: d.blurb.trim() || "One of my own recipes.", temp: d.temp,
+    strength: +d.strength, milk: +d.milk, sweet: +d.sweet, flavors: d.flavors.slice(), base: hasBase ? [d.baseType, baseFromInput(d.baseType, ba)] : null, ing: ing, steps: lines };
+  profile.mine = (profile.mine || []).filter(function (x) { return x.id !== r.id; }).concat([r]);
+  persist(); refreshR();
+  ui.recipe = r.id; ui.from = "mine"; ui.mugs = 1; ui.view = "recipe"; ui.draft = null; ui.draftErr = "";
+  return "";
+}
+
+function vProfile() {
+  var s = profile.survey;
+  var eq = s.equipment.map(function (e) { return EQ[e].label; }).join(", ") || "None";
+  var fl = s.flavors.map(function (f) { return FL[f]; }).join(", ") || "No favorites";
+  var resetBtn = ui.confirmReset
+    ? '<div class="btns"><button class="btn" data-act="cancelreset">Keep everything</button><button class="btn primary" data-act="doreset">Yes, erase it</button></div>'
+    : '<button class="btn ghost block" data-act="reset">Start over</button>';
+  return '<section class="screen"><p class="eyebrow">Your taste</p><h1>How you like it</h1>' +
+    '<div class="card"><dl class="kv">' +
+    "<dt>Temperature</dt><dd>" + ({ hot: "Hot", iced: "Iced", both: "Hot and iced" }[s.temp] || "") + "</dd>" +
+    "<dt>Strength</dt><dd>" + LEVEL.strength[s.strength] + "</dd>" +
+    "<dt>Milk</dt><dd>" + LEVEL.milk[s.milk] + "</dd>" +
+    "<dt>Sweetness</dt><dd>" + LEVEL.sweet[s.sweet] + "</dd>" +
+    "<dt>Milk type</dt><dd>" + ({ dairy: "Dairy", plant: "Plant-based", either: "Either" }[s.dairy] || "") + "</dd>" +
+    "<dt>Flavors</dt><dd>" + fl + "</dd>" +
+    "<dt>Gear</dt><dd>" + eq + "</dd></dl>" +
+    '<button class="btn block" data-act="retake">Retake the taste quiz</button></div>' +
+    '<div class="card"><div class="row"><h3>Units</h3><div class="seg" role="group" aria-label="Units">' +
+    '<button type="button" data-act="units" data-v="us" aria-pressed="' + (profile.units === "us") + '">cups · oz</button>' +
+    '<button type="button" data-act="units" data-v="metric" aria-pressed="' + (profile.units === "metric") + '">ml</button></div></div></div>' +
+    dataCard() + phoneCard() +
+    resetBtn + '<p class="save-note">' + saveNote() + "</p></section>";
+}
+
+/* ---------- Backup & restore ---------- */
+function isArtifact() { return !!(window.claude && typeof window.claude.use === "function"); }
+function pantryCount(p) { return Object.keys(p.pantry || {}).filter(function (k) { return p.pantry[k]; }).length; }
+function backupObj() { return { app: "daily-brew", version: 1, exportedAt: new Date().toISOString(), profile: JSON.parse(JSON.stringify(profile)) }; }
+function backupCode() { return btoa(unescape(encodeURIComponent(JSON.stringify(backupObj())))); }
+function parseBackup(text) {
+  text = (text || "").trim(); if (!text) return null;
+  var obj = null;
+  try { obj = JSON.parse(text); } catch (e) {
+    try { obj = JSON.parse(decodeURIComponent(escape(atob(text.replace(/\s+/g, ""))))); } catch (e2) { obj = null; }
+  }
+  if (obj && obj.profile && obj.profile.survey) return obj;
+  if (obj && obj.survey) return { profile: obj, exportedAt: null };
+  return null;
+}
+function whenText(t) {
+  if (!t) return "not yet";
+  return new Date(t).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+function dataCard() {
+  return '<div class="card" id="your-data"><h2>Your pantry &amp; recipes</h2>' +
+    '<p class="muted small">Everything saves automatically ' + (cloud.status === "cloud" ? "to your Claude account" : "on this device") + ". Last saved " + whenText(profile.updatedAt) + ".</p>" +
+    '<p class="small">' + pantryCount(profile) + " pantry items · " + (profile.mine || []).length + " of your recipes · " + (profile.custom || []).length + " of your syrups &amp; extracts</p>" +
+    '<p class="muted small">Make a backup to keep a safe copy, or to move everything to another device, like your phone.</p>' +
+    '<div class="btns">' + (isArtifact() ? "" : '<button type="button" class="btn" data-act="backupfile">Save backup file</button>') +
+    '<button type="button" class="btn" data-act="backupcopy">Copy backup code</button></div>' +
+    (ui.backupMsg ? '<p class="small" role="status">' + ui.backupMsg + "</p>" : "") +
+    (ui.showCode ? '<label for="bcode" class="muted small">Your backup code</label><textarea id="bcode" class="field-in" rows="4" readonly>' + backupCode() + "</textarea>" : "") +
+    '<button type="button" class="btn ghost block" data-act="openrestore">Restore from a backup</button></div>';
+}
+function vRestore() {
+  var onboard = !profile.done;
+  var pv = ui.pending
+    ? '<div class="subopt ok"><span class="h">Backup found' + (ui.pending.exportedAt ? ", saved " + whenText(ui.pending.exportedAt) : "") + '</span><span>' +
+      pantryCount(ui.pending.profile) + " pantry items, " + (ui.pending.profile.mine || []).length + " of your recipes and " + (ui.pending.profile.custom || []).length + " of your syrups &amp; extracts." +
+      (profile.done ? " This replaces what's on this device now." : "") + "</span></div>"
+    : ui.restoreErr ? '<p class="err" role="alert">' + ui.restoreErr + "</p>" : "";
+  return '<section class="screen' + (onboard ? " onboard" : "") + '"><button class="back" data-act="restoreback">‹ Back</button>' +
+    '<p class="eyebrow">Restore</p><h1>Bring back your pantry and recipes</h1>' +
+    '<p class="muted">Choose the backup file you saved, or paste the backup code you copied.</p>' +
+    '<div class="card"><div class="field"><label for="rfile">Backup file</label><input type="file" id="rfile" class="field-in" accept=".json,application/json,text/plain"></div>' +
+    '<div class="field"><label for="rcode">Or paste your backup code</label><textarea id="rcode" class="field-in" rows="4" placeholder="Paste the code here">' + esc(ui.restoreText || "") + "</textarea></div>" +
+    '<div id="rpreview">' + pv + "</div>" +
+    '<button type="button" class="btn primary block" data-act="dorestore"' + (ui.pending ? "" : " disabled") + ">Restore</button></div></section>";
+}
+function checkRestore(text) {
+  ui.restoreText = text; ui.pending = parseBackup(text);
+  ui.restoreErr = ui.pending || !text.trim() ? "" : "That doesn't look like a Daily Brew backup. Check that you copied the whole code.";
+  var y = window.scrollY; render(); window.scrollTo(0, y);
+}
+
+/* ---------- Add to phone ---------- */
+var installPrompt = null;
+window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); installPrompt = e; if (ui.view === "profile") renderKeep(); });
+window.addEventListener("appinstalled", function () { installPrompt = null; if (ui.view === "profile") renderKeep(); });
+function isStandalone() { try { return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (e) { return false; } }
+function phoneCard() {
+  var ua = navigator.userAgent, ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1), android = /Android/.test(ua);
+  var head = '<div class="card" id="phone"><h2>Add to your phone</h2>', body;
+  var hosted = /^https?:$/.test(location.protocol) && !/^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname);
+  if (isStandalone()) body = '<p>You\'re using Daily Brew from your home screen. It works offline too.</p>';
+  else if (isArtifact()) body = '<p class="small">Open this page\'s link on your phone, in the Claude app or your phone\'s browser, signed in to the same account. Your pantry and recipes come along automatically because they\'re saved to your Claude account.</p>' +
+    '<p class="muted small">For a standalone app with its own home-screen icon, use the project folder on your computer and follow its README.</p>';
+  else if (installPrompt) body = '<p class="small">Install Daily Brew as an app with its own icon. It opens full-screen and works offline.</p><button type="button" class="btn primary block" data-act="install">Install Daily Brew</button>';
+  else if (ios) body = '<ol class="howto"><li>Open this page in <strong>Safari</strong>.</li><li>Tap the <strong>Share</strong> button (the square with an arrow).</li><li>Scroll down and tap <strong>Add to Home Screen</strong>, then <strong>Add</strong>.</li><li>Open Daily Brew from your home screen and restore your backup there. iPhone keeps home-screen apps separate from Safari.</li></ol>';
+  else if (android) body = '<ol class="howto"><li>Open this page in <strong>Chrome</strong>.</li><li>Tap the <strong>⋮</strong> menu.</li><li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li><li>Open Daily Brew from your home screen and restore your backup if you made one.</li></ol>';
+  else if (hosted) body = '<p class="small">Open this address on your phone:</p><p class="addr">' + esc(location.origin + location.pathname) + '</p><p class="muted small">Then follow the steps this card shows on your phone. Tap <strong>Copy backup code</strong> above first, and send it to yourself so you can bring your pantry and recipes along.</p>';
+  else body = '<p class="small">A phone can only install the app from a web address, so put it online first. It\'s free and takes a minute:</p>' +
+    '<ol class="howto"><li>Tap <strong>Copy backup code</strong> above and send it to yourself (email or a note), so your pantry and recipes come along.</li>' +
+    '<li>Go to <strong>app.netlify.com/drop</strong> on this computer and drag your <strong>daily-brew</strong> folder onto the page.</li>' +
+    '<li>Open the link it gives you on your phone and add it to your home screen.</li>' +
+    '<li>Open Daily Brew on your phone, choose <strong>I have a backup to restore</strong>, and paste the code.</li></ol>';
+  return head + body + "</div>";
+}
+function saveNote() { return cloud.status === "cloud" ? "Saved to your Claude account" : "Saved on this device"; }
+
+/* ---------- Sheet ---------- */
+var sheetRoot = document.getElementById("sheet-root"), lastFocus = null;
+function openSheet(title, intro, opts) {
+  lastFocus = document.activeElement;
+  var body = opts.map(function (o) {
+    return '<div class="subopt ' + (o.ok ? "ok" : "no") + '"><span class="h">' + (o.ok ? "You have this" : "Needs " + o.missing.map(labelFor).join(", ").toLowerCase()) + "</span><span>" + o.how + "</span></div>";
+  }).join("");
+  sheetRoot.innerHTML = '<div class="scrim" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"><div class="grab"></div>' +
+    '<h2 id="sheet-title">' + title + "</h2>" + (intro ? '<p class="muted small">' + intro + "</p>" : "") + body +
+    '<button class="btn block" data-act="close">Close</button></div></div>';
+  var b = sheetRoot.querySelector(".sheet .btn"); if (b) b.focus();
+}
+function closeSheet() { sheetRoot.innerHTML = ""; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+document.addEventListener("keydown", function (e) { if (e.key === "Escape" && sheetRoot.innerHTML) closeSheet(); });
+
+/* ---------- Events ---------- */
+document.addEventListener("click", function (e) {
+  var t = e.target.closest("[data-act],[data-go]");
+  if (!t) return;
+  if (t.dataset.go) { ui.view = t.dataset.go; ui.offset = ui.view === "today" ? ui.offset : ui.offset; render(); return; }
+  var a = t.dataset.act, v = t.dataset.v, id = t.dataset.id;
+  if (a === "close") { if (e.target === t || t.tagName === "BUTTON") closeSheet(); return; }
+  if (a === "start") { ui.view = "survey"; ui.step = 0; render(); }
+  else if (a === "answer") {
+    var q = SURVEY[ui.step], val = isNaN(+v) ? v : +v;
+    if (q.multi) {
+      var arr = profile.survey[q.key], ix = arr.indexOf(val);
+      if (ix >= 0) arr.splice(ix, 1); else arr.push(val);
+    } else profile.survey[q.key] = val;
+    persist();
+    var keepY = window.scrollY; render(); window.scrollTo(0, keepY);
+  }
+  else if (a === "snext") {
+    if (ui.step < SURVEY.length - 1) { ui.step++; render(); }
+    else {
+      if (!Object.keys(profile.pantry).length) {
+        // sensible starting pantry based on answers
+        if (profile.survey.milk > 0) profile.pantry[profile.survey.dairy === "plant" ? "milk_oat" : "milk_whole"] = true;
+        if (profile.survey.sweet > 0) profile.pantry.sugar = true;
+        profile.pantry.cinnamon = true;
+        persist();
+      }
+      ui.view = "setup"; render();
+    }
+  }
+  else if (a === "sback") { if (ui.step > 0) { ui.step--; } else { ui.view = profile.done ? "profile" : "welcome"; } render(); }
+  else if (a === "equip") {
+    var eqs = profile.survey.equipment, k = eqs.indexOf(id);
+    if (k >= 0) eqs.splice(k, 1); else eqs.push(id);
+    persist(); t.setAttribute("aria-pressed", k < 0);
+  }
+  else if (a === "pantry") {
+    if (profile.pantry[id]) delete profile.pantry[id]; else profile.pantry[id] = true;
+    persist(); t.setAttribute("aria-pressed", !!profile.pantry[id]);
+    var note = app.querySelector(".save-note");
+    if (note && ui.view === "pantry") note.textContent = Object.keys(profile.pantry).length + " items in your pantry · " + saveNote();
+  }
+  else if (a === "finish") { profile.done = true; persist(); ui.view = "today"; ui.offset = 0; render(); }
+  else if (a === "another") { ui.offset++; render(); }
+  else if (a === "newrec") { ui.editFrom = "mine"; ui.draft = blankDraft(); ui.draftErr = ""; ui.view = "edit"; render(); }
+  else if (a === "editrec") { ui.editFrom = "recipe"; ui.draft = draftFrom(R[ui.recipe], true); ui.draftErr = ""; ui.view = "edit"; render(); }
+  else if (a === "customize") { ui.editFrom = "recipe"; ui.draft = draftFrom(R[ui.recipe], false); ui.draftErr = ""; ui.view = "edit"; render(); }
+  else if (a === "cancelrec") { ui.draft = null; ui.view = ui.editFrom === "recipe" && R[ui.recipe] ? "recipe" : "mine"; render(); }
+  else if (a === "saverec") { var err = saveDraft(); if (err) { ui.draftErr = err; renderKeep(); } else render(); }
+  else if (a === "df") { ui.draft[t.dataset.k] = isNaN(+v) ? v : +v; renderKeep(); }
+  else if (a === "dflav") { var fl = ui.draft.flavors, fi = fl.indexOf(v); if (fi >= 0) fl.splice(fi, 1); else fl.push(v); t.setAttribute("aria-pressed", fi < 0); }
+  else if (a === "ingadd") { ui.draft.ing.push({ id: "", text: "", q: "", u: "tsp", opt: false, note: "" }); renderKeep(); var sel = document.getElementById("ing-" + (ui.draft.ing.length - 1)); if (sel) sel.focus(); }
+  else if (a === "ingdel") { ui.draft.ing.splice(+t.dataset.i, 1); renderKeep(); }
+  else if (a === "delrec") { ui.confirmDel = true; renderKeep(); }
+  else if (a === "delno") { ui.confirmDel = false; renderKeep(); }
+  else if (a === "delyes") { profile.mine = (profile.mine || []).filter(function (x) { return x.id !== ui.recipe; }); ui.confirmDel = false; persist(); ui.view = "mine"; render(); }
+  else if (a === "csadd") {
+    var nm = (document.getElementById("cs-name").value || "").trim(), fv = document.getElementById("cs-flavor").value;
+    if (!nm) { ui.csErr = "Type a name first."; renderKeep(); return; }
+    if ((profile.custom || []).some(function (c) { return c.name.toLowerCase() === nm.toLowerCase(); })) { ui.csErr = "You already added that one."; renderKeep(); return; }
+    var cid = "c_" + Date.now().toString(36);
+    profile.custom = (profile.custom || []).concat([{ id: cid, name: nm.slice(0, 40), flavor: fv, kind: ui.csKind === "extract" ? "extract" : "syrup" }]);
+    profile.pantry[cid] = true; ui.csErr = ""; persist(); renderKeep();
+  }
+  else if (a === "cskind") { var keepName = (document.getElementById("cs-name") || {}).value || ""; ui.csKind = v; renderKeep(); var ni = document.getElementById("cs-name"); if (ni) ni.value = keepName; }
+  else if (a === "openrestore") { ui.pending = null; ui.restoreErr = ""; ui.restoreText = ""; ui.view = "restore"; render(); }
+  else if (a === "restoreback") { ui.view = profile.done ? "profile" : "welcome"; render(); }
+  else if (a === "dorestore") {
+    if (!ui.pending) return;
+    profile = Object.assign(blankProfile(), ui.pending.profile);
+    if (profile.survey && profile.survey.equipment && profile.survey.equipment.length) profile.done = true;
+    ui.pending = null; ui.restoreText = ""; persist();
+    ui.backupMsg = "Restored. Your pantry and recipes are back.";
+    ui.view = profile.done ? "today" : "survey"; ui.step = 0; ui.offset = 0; render();
+  }
+  else if (a === "backupcopy") {
+    var code = backupCode();
+    var done = function () { ui.backupMsg = "Backup code copied. Paste it somewhere safe, like a note or an email to yourself."; ui.showCode = false; renderKeep(); };
+    var fail = function () { ui.backupMsg = "Copy the code below and keep it somewhere safe."; ui.showCode = true; renderKeep(); var ta = document.getElementById("bcode"); if (ta) { ta.focus(); ta.select(); } };
+    try { navigator.clipboard.writeText(code).then(done, fail); } catch (err) { fail(); }
+  }
+  else if (a === "backupfile") {
+    try {
+      var blob = new Blob([JSON.stringify(backupObj(), null, 2)], { type: "application/json" });
+      var url = URL.createObjectURL(blob), link = document.createElement("a"), d8 = new Date();
+      link.href = url; link.download = "daily-brew-backup-" + d8.getFullYear() + "-" + String(d8.getMonth() + 1).padStart(2, "0") + "-" + String(d8.getDate()).padStart(2, "0") + ".json";
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      ui.backupMsg = "Backup file saved to your Downloads folder.";
+    } catch (err) { ui.backupMsg = "Your browser blocked the download. Use Copy backup code instead."; }
+    renderKeep();
+  }
+  else if (a === "install") {
+    if (installPrompt) { installPrompt.prompt(); installPrompt.userChoice.then(function () { installPrompt = null; renderKeep(); }, function () {}); }
+  }
+  else if (a === "csdel") { profile.custom = (profile.custom || []).filter(function (c) { return c.id !== id; }); delete profile.pantry[id]; persist(); renderKeep(); }
+  else if (a === "open") { ui.confirmDel = false; ui.from = ui.view === "recipe" ? ui.from : ui.view; ui.recipe = id; ui.mugs = 1; ui.view = "recipe"; render(); }
+  else if (a === "method") { profile.lastMethod = profile.lastMethod || {}; profile.lastMethod[R[ui.recipe].base[0]] = v; persist(); var y3 = window.scrollY; render(); window.scrollTo(0, y3); }
+  else if (a === "back") { ui.view = ui.from || "today"; render(); }
+  else if (a === "mugs") { ui.mugs = Math.min(8, Math.max(1, ui.mugs + (+v))); var y2 = window.scrollY; render(); window.scrollTo(0, y2); }
+  else if (a === "subs") {
+    var opts = subsFor(id).sort(function (x, y) { return y.ok - x.ok; });
+    openSheet("Swaps for " + labelFor(id).toLowerCase(), has(id) ? "You have this, but here's what works if you run out." : "Ways to make this recipe without it.", opts);
+  }
+  else if (a === "basesubs") {
+    var r = R[ui.recipe], type = r.base[0], B = BASES[type];
+    var list = B.direct.concat(B.alt).map(function (mth) {
+      return { ok: hasEquip(mth), missing: [], how: "<strong>" + EQ[mth].label + ":</strong> " + baseStep(type, mth, r.base[1] * ui.mugs), m: mth };
+    }).sort(function (x, y) { return y.ok - x.ok; });
+    list.forEach(function (o) { if (!o.ok) o.missing = ["__" + o.m]; });
+    openSheet("Ways to make the " + B.label.toLowerCase(), "Every method that works for this recipe, starting with gear you have.", list);
+  }
+  else if (a === "filter") { ui.filter = v; render(); }
+  else if (a === "units") { profile.units = v; persist(); render(); }
+  else if (a === "retake") { ui.view = "survey"; ui.step = 0; render(); }
+  else if (a === "reset") { ui.confirmReset = true; render(); }
+  else if (a === "cancelreset") { ui.confirmReset = false; render(); }
+  else if (a === "doreset") { profile = blankProfile(); ui.confirmReset = false; persist(); ui.view = "welcome"; render(); }
+  else if (a === "go") { ui.view = v; render(); }
+});
+// labels for gear in the "needs" line
+var _labelFor = labelFor;
+labelFor = function (id) { return id.indexOf("__") === 0 ? (EQ[id.slice(2)] ? EQ[id.slice(2)].label : id) : _labelFor(id); };
+
+function renderKeep() { var y = window.scrollY; render(); window.scrollTo(0, y); }
+function setDraftField(el) {
+  var f = el.dataset.f; if (!f || !ui.draft) return false;
+  var val = el.type === "checkbox" ? el.checked : el.value, parts = f.split(".");
+  if (parts[0] === "ing") ui.draft.ing[+parts[1]][parts[2]] = val; else ui.draft[f] = val;
+  return true;
+}
+document.addEventListener("input", function (e) {
+  if (e.target.id === "search") { ui.q = e.target.value; renderLibList(); return; }
+  if (e.target.id === "rcode") {
+    ui.restoreText = e.target.value; ui.pending = parseBackup(e.target.value);
+    ui.restoreErr = ui.pending || !e.target.value.trim() ? "" : "That doesn't look like a Daily Brew backup yet. Make sure you pasted the whole code.";
+    var pvEl = document.getElementById("rpreview"), btn = document.querySelector("[data-act=dorestore]");
+    if (pvEl) { var tmp = document.createElement("div"); tmp.innerHTML = vRestore(); var np = tmp.querySelector("#rpreview"); pvEl.innerHTML = np ? np.innerHTML : ""; }
+    if (btn) btn.disabled = !ui.pending;
+    return;
+  }
+  setDraftField(e.target);
+});
+document.addEventListener("change", function (e) {
+  if (e.target.id === "rfile" && e.target.files && e.target.files[0]) {
+    var fr = new FileReader();
+    fr.onload = function () { checkRestore(String(fr.result || "")); };
+    fr.onerror = function () { ui.restoreErr = "Couldn't read that file. Try the backup code instead."; renderKeep(); };
+    fr.readAsText(e.target.files[0]);
+    return;
+  }
+  if (!setDraftField(e.target)) return;
+  var f = e.target.dataset.f;
+  if (f === "baseType") {
+    var d = ui.draft; d.baseAmt = d.baseType === "esp" ? 2 : d.baseType === "inst" ? 2 : baseToInput(d.baseType, 240);
+    renderKeep();
+  } else if (/^ing\.\d+\.id$/.test(f)) {
+    renderKeep();
+    if (e.target.value === "x:") { var tx = document.getElementById("ingt-" + f.split(".")[1]); if (tx) tx.focus(); }
+  }
+});
+
+render();
+
+/* ---------- Account sync ---------- */
+(async function () {
+  if (!window.claude || typeof window.claude.use !== "function") return;
+  var timer = setTimeout(function () { timer = null; }, 10000);
+  try {
+    var res = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    var db = res[0], user = res[1];
+    if (!db || !user || !timer) return;
+    var id = await user.id();
+    var ref = db.collection("data/users/" + id).doc("profile");
+    var snap = await ref.get();
+    clearTimeout(timer);
+    var data = snap && typeof snap.data === "function" ? snap.data() : snap;
+    if (snap && snap.exists === false) data = null;
+    cloud.ref = ref; cloud.status = "cloud";
+    if (data && data.survey && (data.updatedAt || 0) > (profile.updatedAt || 0)) {
+      var inOnboarding = ui.view === "survey" || ui.view === "setup";
+      profile = Object.assign(blankProfile(), data);
+      try { localStorage.setItem("daily-brew", JSON.stringify(profile)); } catch (e) {}
+      if (profile.done && (ui.view === "welcome" || inOnboarding)) ui.view = "today";
+      render();
+    } else if (profile.updatedAt) {
+      persist();
+      render();
+    } else {
+      var n = app.querySelector(".save-note"); if (n && ui.view === "profile") n.textContent = saveNote();
+    }
+  } catch (e) { if (timer) clearTimeout(timer); }
+})();
+})();
+</script>
+
+<script>
+/* Offline support: works once the app is served over http(s), not from a double-clicked file. */
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
